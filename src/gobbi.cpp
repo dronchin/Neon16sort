@@ -11,25 +11,24 @@ gobbi::gobbi(histo * Histo1)
 {
   Histo = Histo1;
 
-
-  for (int id=0;id<5;id++)
+  for (int id=0;id<4;id++)
   {
-    Silicon[id] = new silicon(TargetThickness);
+    Silicon[id] = new silicon();
     Silicon[id]->init(id); //tells Silicon what position it is in
-    Silicon[id]->SetTargetDistance(Targetdist);
   }
 
-  FrontEcal = new calibrate(4, Histo->channum, "Cal/FrontEcal.dat", 1, true);
-  BackEcal = new calibrate(4, Histo->channum, "Cal/BackEcal.dat", 1, true);
-  DeltaEcal = new calibrate(4, Histo->channum, "Cal/DeltaEcal.dat", 1, true);
-  FrontTimecal = new calibrate(4, Histo->channum, "Cal/FrontTimecal.dat",1, false);
-  BackTimecal = new calibrate(4, Histo->channum, "Cal/BackTimecal.dat",1, false);  
-  DeltaTimecal = new calibrate(4, Histo->channum, "Cal/DeltaTimecal.dat",1, false);
+  FrontEcal = new calibrate(4, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
+  BackEcal = new calibrate(4, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
+  DeltaEcal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
+
+  FrontTimecal = new calibrate(4, Histo->channum, "Cal/GobbiFrontTimecal.dat",1, false);
+  BackTimecal = new calibrate(4, Histo->channum, "Cal/GobbiBackTimecal.dat",1, false);  
+  DeltaTimecal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaTimecal.dat",1, false);
 }
 
 gobbi::~gobbi()
 {
-  delete ADC;
+  delete ADC;   
   delete FrontEcal;
   delete BackEcal;
   delete DeltaEcal;
@@ -39,156 +38,122 @@ gobbi::~gobbi()
   //delete[] Silicon; //not needed as it is in automatic memory, didn't call with new
 }
 
-void SetTarget
+void gobbi::SetTarget(double Targetdist, float TargetThickness)
+{
+  for (int id=0;id<4;id++)
+  {
+    Silicon[id]->SetTargetDistance(Targetdist);
+    Silicon[id]->SetTargetThickness(TargetThickness);
+  }
+}
 
+void gobbi::addFrontEvent(int quad, unsigned short chan, unsigned short high, 
+                                    unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in silicon
+  float Energy = FrontEcal->getEnergy(quad, chan, high);
+  float time = FrontTimecal->getTime(quad, chan, time);
 
-bool gobbi::unpack(unsigned short *point)
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumFrontE_R->Fill(quad*Histo->channum + chan, high);
+  Histo->sumFrontTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumFrontE_cal->Fill(quad*Histo->channum + chan, Energy);
+  Histo->sumFrontTime_cal->Fill(quad*Histo->channum + chan, time);
+
+  Histo->FrontE_R[quad][chan]->Fill(high);
+  Histo->FrontElow_R[quad][chan]->Fill(low);
+  Histo->FrontTime_R[quad][chan]->Fill(time);
+  Histo->FrontE_cal[quad][chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Silicon[quad]->Front.Add(chan, Energy, low, high, time);
+  Silicon[quad]->multFront++;
+}
+
+void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high, 
+                                   unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in silicon
+  float Energy = BackEcal->getEnergy(quad, chan, high);
+  float time = BackTimecal->getTime(quad, chan, time);
+
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumBackE_R->Fill(quad*Histo->channum + chan, high);
+  Histo->sumBackTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumBackE_cal->Fill(quad*Histo->channum + chan, Energy);
+  Histo->sumBackTime_cal->Fill(quad*Histo->channum + chan, time);
+
+  Histo->BackE_R[quad][chan]->Fill(high);
+  Histo->BackElow_R[quad][chan]->Fill(low);
+  Histo->BackTime_R[quad][chan]->Fill(time);
+  Histo->BackE_cal[quad][chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Silicon[quad]->Back.Add(chan, Energy, low, high, time);
+  Silicon[quad]->multBack++;
+}
+
+void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high, 
+                                    unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in silicon
+  float Energy = DeltaEcal->getEnergy(quad, chan, high);
+  float time = DeltaTimecal->getTime(quad, chan, time);
+
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumDeltaE_R->Fill(quad*Histo->channum + chan, high);
+  Histo->sumDeltaTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumDeltaE_cal->Fill(quad*Histo->channum + chan, Energy);
+  Histo->sumDeltaTime_cal->Fill(quad*Histo->channum + chan, time);
+
+  Histo->DeltaE_R[quad][chan]->Fill(high);
+  Histo->DeltaElow_R[quad][chan]->Fill(low);
+  Histo->DeltaTime_R[quad][chan]->Fill(time);
+  Histo->DeltaE_cal[quad][chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Silicon[quad]->Delta.Add(chan, Energy, low, high, time);
+  Silicon[quad]->multDelta++;
+}
+
+void gobbi::addCsIEvent(int quad, unsigned short chan, unsigned short high, 
+                                  unsigned short low, unsigned short time)
+{
+  //TODO major TODO
+  //this part is going to need some testing and work. 
+  //I don't know and can't anticipate what it should look like
+  return
+}
+
+void gobbi::reset()
 {
   //reset the Silicon class
   for (int i=0;i<4;i++){ Silicon[i]->reset();}
+  //make sure to reset the CsI here as well, whatever they end up looking like
+}
 
-  bool stat = true;
-  stat = ADC->unpackSi_HINP4(point);
-  if (!stat)
-  {
-    cout << "Bad hira" << endl;
-    return stat;
-  }
-
-  for (int i=0; i<ADC->NstripsRead; i++)
-  {
-    //check if there is an array for determined chip# and chan#
-    if (ADC->board[i] > 12 || ADC->chan[i] >= Histo->channum)
-    {
-      cout << "ADC->NstripsRead " << ADC->NstripsRead << endl;
-      cout << "i " << i << endl;
-      cout << "Board " << ADC->board[i] << " and chan " << ADC->chan[i];
-      cout << " unpacked but not saved" << endl;
-      return true;
-    }
-
-    float Energy = 0;
-    float time = 0; //can be calibrated or shifted later
-
-    //Use calibration to get Energy and fill elist class in silicon
-    if (ADC->board[i] == 1 || ADC->board[i] == 3 || ADC->board[i] == 5 || ADC->board[i] == 7)
-    {
-      int quad = (ADC->board[i] - 1)/2;
-      Energy = FrontEcal->getEnergy(quad, ADC->chan[i], ADC->high[i]);
-      time = FrontTimecal->getTime(quad, ADC->chan[i], ADC->time[i]);
-
-      Histo->sumFrontE_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->high[i]);
-      Histo->sumFrontTime_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->time[i]);
-      Histo->sumFrontE_cal->Fill(quad*Histo->channum + ADC->chan[i], Energy);
-      Histo->sumFrontTime_cal->Fill(quad*Histo->channum + ADC->chan[i], time);
-
-      Histo->FrontE_R[quad][ADC->chan[i]]->Fill(ADC->high[i]);
-      Histo->FrontElow_R[quad][ADC->chan[i]]->Fill(ADC->low[i]);
-      Histo->FrontTime_R[quad][ADC->chan[i]]->Fill(ADC->time[i]);
-      Histo->FrontE_cal[quad][ADC->chan[i]]->Fill(Energy);      
-
-      //if (Energy > .5 && ADC->time[i] > 3420 && ADC->time[i] < 6380 && (quad != 1 || Energy > 1.8))
-      //need to set thresholds just above noise
-      //if (quad == 1 && (
-
-      if (Energy > .5 && (quad != 1 || Energy > 2))
-      {
-          Silicon[quad]->Front.Add(ADC->chan[i], Energy, ADC->low[i], ADC->high[i], time);
-          Silicon[quad]->multFront++;
-      }
-    }
-    if (ADC->board[i] == 2 || ADC->board[i] == 4 || ADC->board[i] == 6 || ADC->board[i] == 8)
-    {
-      int quad = (ADC->board[i]/2)-1;
-      Energy = BackEcal->getEnergy(quad, ADC->chan[i], ADC->high[i]);
-      time = BackTimecal->getTime(quad, ADC->chan[i], ADC->time[i]);
-
-      Histo->sumBackE_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->high[i]);
-      Histo->sumBackTime_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->time[i]);
-      Histo->sumBackE_cal->Fill(quad*Histo->channum + ADC->chan[i], Energy);
-      Histo->sumBackTime_cal->Fill(quad*Histo->channum + ADC->chan[i], time);
-
-      Histo->BackE_R[quad][ADC->chan[i]]->Fill(ADC->high[i]);
-      Histo->BackElow_R[quad][ADC->chan[i]]->Fill(ADC->low[i]);
-      Histo->BackTime_R[quad][ADC->chan[i]]->Fill(ADC->time[i]);
-      Histo->BackE_cal[quad][ADC->chan[i]]->Fill(Energy);  
-
-      if (Energy > .5)
-      {      
-          Silicon[quad]->Back.Add(ADC->chan[i], Energy, ADC->low[i], ADC->high[i], time);
-          Silicon[quad]->multBack++;
-      }
-    }
-    if (ADC->board[i] == 9 || ADC->board[i] == 10 || ADC->board[i] == 11 || ADC->board[i] == 12)
-    {
-      int quad = (ADC->board[i]-9);
-      Energy = DeltaEcal->getEnergy(quad, ADC->chan[i], ADC->high[i]);
-      time = DeltaTimecal->getTime(quad, ADC->chan[i], ADC->time[i]);
-
-      Histo->sumDeltaE_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->high[i]);
-      Histo->sumDeltaTime_R->Fill(quad*Histo->channum + ADC->chan[i], ADC->time[i]);
-      Histo->sumDeltaE_cal->Fill(quad*Histo->channum + ADC->chan[i], Energy);
-      Histo->sumDeltaTime_cal->Fill(quad*Histo->channum + ADC->chan[i], time);
-
-      Histo->DeltaE_R[quad][ADC->chan[i]]->Fill(ADC->high[i]);
-      Histo->DeltaElow_R[quad][ADC->chan[i]]->Fill(ADC->low[i]);
-      Histo->DeltaTime_R[quad][ADC->chan[i]]->Fill(ADC->time[i]);
-      Histo->DeltaE_cal[quad][ADC->chan[i]]->Fill(Energy);  
-
-      //if(Energy > .2 && ADC->time[i] > 1765 && ADC->time[i] < 8600)
-      if(Energy > .2)
-      {
-        //if (quad == 0 && ADC->chan[i] == 0) cout << "EE " << Energy << endl;
-        
-        Silicon[quad]->Delta.Add(ADC->chan[i], Energy, ADC->low[i], ADC->high[i], time);
-        Silicon[quad]->multDelta++;
-      }
-    }
-  }
-  //data is unpacked and stored into Silicon class at this point
-
-
-  //This is the spot if we run Silicon->Neighbours()
+void gobbi::SiNeigbours()
+{
+  //When a charged particle moves through Si, there is cross talk between neighbouring
+  //strips. Generally the signal is proportional to the total signal in the Si.
   for (int id=0;id<4;id++) 
   {
     Silicon[id]->Front.Neighbours(id);
     Silicon[id]->Back.Neighbours(id);
     Silicon[id]->Delta.Neighbours(id);
   }
+}
 
-  //Fill summary after addback
-  int sumchan = 0;
-  for (int id=0;id<4;id++) 
-  {
-    for (int n=0; n<Silicon[id]->Front.Nstore; n++)
-    {
-      sumchan = id*Histo->channum + Silicon[id]->Front.Order[n].strip;
-      Histo->sumFrontE_addback->Fill(sumchan, Silicon[id]->Front.Order[n].energy);
-    }
-    for (int n=0; n<Silicon[id]->Back.Nstore; n++)
-    {
-      sumchan = id*Histo->channum + Silicon[id]->Back.Order[n].strip;
-      Histo->sumBackE_addback->Fill(sumchan, Silicon[id]->Back.Order[n].energy);
-    }
-    for (int n=0; n<Silicon[id]->Delta.Nstore; n++)
-    {
-      sumchan = id*Histo->channum + Silicon[id]->Delta.Order[n].strip;
-      Histo->sumDeltaE_addback->Fill(sumchan, Silicon[id]->Delta.Order[n].energy);
-    }
-  }
+int gobbi::matchTele()
+{
+  //TODO fix all of this! need to match CsI info here
 
-  
-  for (int id=0;id<4;id++) 
-  {
-    if (Silicon[id]->Front.Nstore == 1 && Silicon[id]->Delta.Nstore == 1)
-    {
-      Histo->frontdeltastripnum[id]->Fill(Silicon[id]->Front.Order[0].strip, Silicon[id]->Delta.Order[0].strip);
-      Histo->timediff[id]->Fill(Silicon[id]->Front.Order[0].time - Silicon[id]->Delta.Order[0].time);
-    }
-  }
-
-  //look at all the information/multiplicities and determine how to match up the information
-  int totMulti = 0;
+  //look at all the information/multiplicities and determine how to match up 
+  //the information
+  totMulti = 0;
   for (int id=0;id<4;id++) 
   {
     //save comp time if the event is obvious
@@ -207,88 +172,19 @@ bool gobbi::unpack(unsigned short *point)
   //plot E vs dE bananas and hitmap of paired dE,E events
   for (int id=0;id<4;id++) 
   {
-    //cout << "id " << id << "   Nsol " << Silicon[id]->Nsolution << endl;
     for (int isol=0;isol<Silicon[id]->Nsolution; isol++)
     {
       //fill in hitmap of gobbi
       Silicon[id]->position(isol); //calculates x,y pos, and lab angle
-      //cout << "isol " << isol << endl; 
-      //cout << "cos " << cos(Silicon[id]->Solution[isol].theta) << endl;
-      //cout << "the " << Silicon[id]->Solution[isol].theta*180./3.1415 << endl;
-      //cout << "front strip " << Silicon[id]->Solution[isol].ifront << "  back strip " << Silicon[id]->Solution[isol].iback << endl;
-      //cout << "x " << Silicon[id]->Solution[isol].Xpos << "  y " << Silicon[id]->Solution[isol].Ypos << endl;
-      //cout << "E " << Silicon[id]->Solution[isol].energy << "  dE " << Silicon[id]->Solution[isol].denergy << endl;
-
-
-      //these events are all blocked by the beam donut, radius 1.9cm
-      if (1.5 > sqrt( pow(Silicon[id]->Solution[isol].Xpos,2)+ pow(Silicon[id]->Solution[isol].Ypos,2)) )
-        continue;
 
       //fill in dE-E plots to select particle type
+      //TODO there is a correction on the de for angle, probably also required for E now
       float Ener = Silicon[id]->Solution[isol].energy + Silicon[id]->Solution[isol].denergy*(1-cos(Silicon[id]->Solution[isol].theta));
 
       Histo->DEE[id]->Fill(Ener, Silicon[id]->Solution[isol].denergy*cos(Silicon[id]->Solution[isol].theta));
 
       Histo->xyhitmap->Fill(Silicon[id]->Solution[isol].Xpos, Silicon[id]->Solution[isol].Ypos);
-      //fill hist on theta/phi angles
-      double th = Silicon[id]->Solution[isol].theta*180./pi; //in deg, not rad
-      Histo->Evstheta[id]->Fill(th, Silicon[id]->Solution[isol].energy);
-      Histo->Evstheta_all->Fill(th, Silicon[id]->Solution[isol].energy);
-      Histo->Theta->Fill(th);
-
-      //used to get high energy calibration points
-      //need to convert interlaced strip numbers to calibration strip numbers
-      int chan = Silicon[id]->Solution[isol].ifront;
-      if (chan%2 ==0) //evens
-      {
-        chan = chan/2 + 16;
-      }
-      else //odds
-      {
-        chan = (chan -1)/2;
-      }
-
-      //make a correction to the energy based on angle
-      float angle_Ecorr =  1.0277e-5*pow(th,3) + 1.6125e-3*pow(th,2) + 8.3097e-4*th - 1.0227e-3;
-      //cout << "th " << th << " Angle corr " << angle_Ecorr << " MeV" << endl;
-      float Ecorr = Silicon[id]->Solution[isol].energy + angle_Ecorr;
-      float Ecorr_R = FrontEcal->reverseCal(id,Silicon[id]->Solution[isol].ifront, Ecorr);
-      //if (Ecorr > 5)      
-        //cout << "EnergyR " << Silicon[id]->Solution[isol].energyR << " Ecorr " << Ecorr << " Ecorr_R " << Ecorr_R << endl;
-
-      Histo->AngleCorrE[id][chan]->Fill(Ecorr);
-      Histo->AngleCorr_noCorr[id][chan]->Fill(Silicon[id]->Solution[isol].energy);
-      Histo->AngleCorrE_R[id][chan]->Fill(Ecorr_R);
       
-      Histo->AngleCorrFrontE_cal->Fill(id*Histo->channum + Silicon[id]->Solution[isol].ifront, Ecorr);
-
-      int chandE = Silicon[id]->Solution[isol].ide;
-      if (chan%2 ==0) //evens
-      {
-        chandE = chandE/2 + 16;
-      }
-      else //odds
-      {
-        chandE = (chandE -1)/2;
-      }
-
-      //make a correction to the energy based on angle
-      float angle_dEcorr =  -1.0971e-5*pow(th,3) - 1.1446e-3*pow(th,2) - 8.9371e-4*th + 1.0879e-3;
-      //float angle_dEcorr =  2.0527e-6*pow(th,3) - 1.4281e-3*pow(th,2) + 1.5589e-4*th - 7.3389e-4;//no Au foilloss
-      //cout << "th " << th << " Angle corr " << angle_dEcorr << " MeV" << endl;
-      float dEcorr = Silicon[id]->Solution[isol].denergy + angle_dEcorr;
-      float dEcorr_R = DeltaEcal->reverseCal(id,Silicon[id]->Solution[isol].ide, dEcorr);
-
-      Histo->AngleCorrDeltaE[id][chandE]->Fill(dEcorr);
-      Histo->AngleCorrDeltaE_noCorr[id][chandE]->Fill(Silicon[id]->Solution[isol].denergy);
-      Histo->AngleCorrDeltaE_R[id][chandE]->Fill(dEcorr_R);
-      
-      Histo->AngleCorrDeltaE_cal->Fill(id*Histo->channum + Silicon[id]->Solution[isol].ide, dEcorr);
-
-      float Etot = Silicon[id]->Solution[isol].energy + Silicon[id]->Solution[isol].denergy;
-      Histo->sumEtot_cal->Fill(id*Histo->channum + Silicon[id]->Solution[isol].ifront, Etot);
-      Histo->AngleCorrSum_cal->Fill(id*Histo->channum + Silicon[id]->Solution[isol].ifront, Ecorr+dEcorr);
-
     }
   }
 
@@ -299,51 +195,6 @@ bool gobbi::unpack(unsigned short *point)
     Pidmulti += Silicon[id]->getPID();
   }
 
-  //hitmaps and other plots based on Pid
-  for (int id=0;id<4;id++) 
-  {
-    for (int isol=0; isol<Silicon[id]->Nsolution; isol++)
-    {
-      float xpos = Silicon[id]->Solution[isol].Xpos;
-      float ypos = Silicon[id]->Solution[isol].Ypos;
-      //protons
-      if (Silicon[id]->Solution[isol].iZ == 1 && Silicon[id]->Solution[isol].iA == 1)
-      {
-        Histo->protonhitmap->Fill(xpos, ypos);
-        Histo->dTime_proton->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-      //deuterons
-      if (Silicon[id]->Solution[isol].iZ == 1 && Silicon[id]->Solution[isol].iA == 2)
-      {
-        Histo->deuteronhitmap->Fill(xpos, ypos);
-        Histo->dTime_deuteron->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-      //tritons
-      if (Silicon[id]->Solution[isol].iZ == 1 && Silicon[id]->Solution[isol].iA == 3)
-      {
-        Histo->tritonhitmap->Fill(xpos, ypos);
-        Histo->dTime_triton->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-      //alphas
-      if (Silicon[id]->Solution[isol].iZ == 2 && Silicon[id]->Solution[isol].iA == 4)
-      {
-        Histo->alphahitmap->Fill(xpos, ypos);
-        Histo->dTime_alpha->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-      //He6
-      if (Silicon[id]->Solution[isol].iZ == 2 && Silicon[id]->Solution[isol].iA == 6)
-      {
-        Histo->He6hitmap->Fill(xpos, ypos);
-        Histo->dTime_He6->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-      if (Silicon[id]->Solution[isol].iZ == 3)
-      {
-        Histo->Lihitmap->Fill(xpos, ypos);
-        Histo->dTime_Li->Fill(Silicon[id]->Solution[isol].timediff);
-      }
-    }
-  }
-
   //calc sumEnergy,then account for Eloss in target, then set Ekin and momentum of solutions
   //Eloss files are loaded in silicon
   for (int id=0;id<4;id++) 
@@ -351,18 +202,7 @@ bool gobbi::unpack(unsigned short *point)
     Silicon[id]->calcEloss();
   }
 
-
-
-  for (int id=0;id<4;id++) 
-  {
-    for (int isol=0; isol<Silicon[id]->Nsolution; isol++)
-    {
-      if (Silicon[id]->Solution[isol].iZ == 1 && Silicon[id]->Solution[isol].iA == 1)
-      {
-        Histo->ProtonEnergy->Fill(Silicon[id]->Solution[isol].Ekin, Silicon[id]->Solution[isol].theta*180./pi);
-      }
-    }
-  }
+}
 
 
 

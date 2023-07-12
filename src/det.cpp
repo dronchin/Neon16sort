@@ -18,22 +18,22 @@ det::det(histo * Histo1)
   TargetThickness = 2.65;//mg/cm^2 for CD2 tar1
 
 
-  gobbi = new Gobbi(Histo); //pass in histo pointer
-  gobbi->SetTarget(Targetdist, TargetThickness);
+  Gobbi = new gobbi(Histo); //pass in histo pointer
+  Gobbi->SetTarget(Targetdist, TargetThickness);
 
   WW = new Tele(Histo); //maybe i want to seperate this here?
 }
 
 det::~det()
 {
-  delete gobbi;
+  delete Gobbi;
   delete WW;
 }
 
 bool Det::unpack(unsigned short *point)
 {
   //reset the Detectors class
-  gobbi->reset();
+  Gobbi->reset();
   WW->reset()
 
   bool stat = true;
@@ -92,98 +92,51 @@ bool Det::unpack(unsigned short *point)
   //data is unpacked and stored into Silicon class at this point
 
   //leave this part out early in the experiment, it causes a lot of troubles!!
-  Gobbi->Neighbours();
-  WW->Neighbours();
+  Gobbi->SiNeighbours();
+  WW->SiNeighbours();
 
 
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-
-  //look at all the information/multiplicities and determine how to match up the information
-  for (int id=0;id<4;id++) 
-  {
-    //save comp time if the event is obvious
-    if (Silicon[id]->Front.Nstore ==1 && Silicon[id]->Back.Nstore ==1 && Silicon[id]->Delta.Nstore ==1)
-    {
-      totMulti += Silicon[id]->simpleFront();
-      //cout << "simple " << totMulti << endl;
-    }
-    else //if higher multiplicity then worry about picking the right one
-    {    //this also handles the case where Nstore=0 for any of the chanels
-      totMulti += Silicon[id]->multiHit();
-      //cout << "multi " << totMulti << endl;
-    }
-  }
-
-  //plot E vs dE bananas and hitmap of paired dE,E events
-  for (int id=0;id<4;id++) 
-  {
-    //cout << "id " << id << "   Nsol " << Silicon[id]->Nsolution << endl;
-    for (int isol=0;isol<Silicon[id]->Nsolution; isol++)
-    {
-      //fill in hitmap of gobbi
-      Silicon[id]->position(isol); //calculates x,y pos, and lab angle
-
-      //these events are all blocked by the beam donut, radius 1.9cm
-      if (1.5 > sqrt( pow(Silicon[id]->Solution[isol].Xpos,2)+ pow(Silicon[id]->Solution[isol].Ypos,2)) )
-        continue;
-
-      //fill in dE-E plots to select particle type
-      float Ener = Silicon[id]->Solution[isol].energy + Silicon[id]->Solution[isol].denergy*(1-cos(Silicon[id]->Solution[isol].theta));
-
-      Histo->DEE[id]->Fill(Ener, Silicon[id]->Solution[isol].denergy*cos(Silicon[id]->Solution[isol].theta));
-
-      Histo->xyhitmap->Fill(Silicon[id]->Solution[isol].Xpos, Silicon[id]->Solution[isol].Ypos);
- 
-
-    }
-  }
-
-  //calculate and determine particle identification PID in the silicon
-  int Pidmulti = 0;
-  for (int id=0;id<4;id++) 
-  {
-    Pidmulti += Silicon[id]->getPID();
-  }
-
   //hitmaps and other plots based on Pid
   for (int id=0;id<4;id++) 
   {
-    for (int isol=0; isol<Silicon[id]->Nsolution; isol++)
+    for (int isol=0; isol<Gobbi->Silicon[id]->Nsolution; isol++)
     {
-      float xpos = Silicon[id]->Solution[isol].Xpos;
-      float ypos = Silicon[id]->Solution[isol].Ypos;
+      float xpos = Gobbi->Silicon[id]->Solution[isol].Xpos;
+      float ypos = Gobbi->Silicon[id]->Solution[isol].Ypos;
       //protons
-      if (Silicon[id]->Solution[isol].iZ == 1 && Silicon[id]->Solution[isol].iA == 1)
+      if (Gobbi->Silicon[id]->Solution[isol].iZ == 1 && Gobbi->Silicon[id]->Solution[isol].iA == 1)
       {
         Histo->protonhitmap->Fill(xpos, ypos);
-        Histo->dTime_proton->Fill(Silicon[id]->Solution[isol].timediff);
       }
       
     }
   }
 
-  //calc sumEnergy,then account for Eloss in target, then set Ekin and momentum of solutions
-  //Eloss files are loaded in silicon
-  for (int id=0;id<4;id++) 
-  {
-    Silicon[id]->calcEloss();
-  }
-
-  //transfer Solution class to Correl
+  //transfer Solutions in Gobbi and WW to Correl
   Correl.reset();
   int goodMult = 0;
   for (int id=0;id<4;id++) 
   {
-    for (int isol=0; isol<Silicon[id]->Nsolution; isol++)
+    for (int isol=0; isol<Gobbi->Silicon[id]->Nsolution; isol++)
     {
       //only keep solutions that have a pid
-      if(Silicon[id]->Solution[isol].ipid)
+      if(Gobbi->Silicon[id]->Solution[isol].ipid)
       {
-        Correl.load(&Silicon[id]->Solution[isol]);
+        Correl.load(&Gobbi->Silicon[id]->Solution[isol]);
         goodMult++;
       }
+    }
+  }
+  for (int isol=0; isol < WW->Silicon->Nsolution; isol++)
+  {
+    //only keep solutions that have a pid
+    if(WW->Silicon->Solution[isol].ipid)
+    {
+      Correl.load(&WW->Silicon->Solution[isol]);
+      goodMult++;
     }
   }
 

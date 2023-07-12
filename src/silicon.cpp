@@ -8,7 +8,7 @@ using namespace std;
   //constructor
 silicon::silicon(float thick0)
 {
-  TargetThickness = thick0;
+//  TargetThickness = thick0;
   SiWidth = 6.45;
   //switch which loss file is used depending on the target.
   losses = new CLosses(6,"_CD2.loss");
