@@ -1,0 +1,113 @@
+void plot_PSDcrys()
+{
+  bool save = true;
+  
+  TCanvas *c1 = new TCanvas("c1", "PSD");
+  if (save) c1->SetWindowSize(1600,1200);
+  //if (!save) c1->SetWindowSize(1280,960);
+  c1->Divide(3,2,0.0001,0.0001);
+
+  
+  TFile *input = new TFile("../sort1279.root", "read");
+
+  TH2F *PSDcrys10 = (TH2F*)input->Get("Fingers/PSDcrys1.0");
+  TH2F *PSDcrys11 = (TH2F*)input->Get("Fingers/PSDcrys1.1");
+  TH2F *PSDcrys12 = (TH2F*)input->Get("Fingers/PSDcrys1.2");
+  TH2F *PSDcrys13 = (TH2F*)input->Get("Fingers/PSDcrys1.3");
+  TH2F *PSDcrys14 = (TH2F*)input->Get("Fingers/PSDcrys1.4");
+  TH2F *PSDcrys15 = (TH2F*)input->Get("Fingers/PSDcrys1.5");
+  
+  TH2F *PSDcrys30 = (TH2F*)input->Get("Fingers/PSDcrys3.0");
+  TH2F *PSDcrys31 = (TH2F*)input->Get("Fingers/PSDcrys3.1");
+  TH2F *PSDcrys32 = (TH2F*)input->Get("Fingers/PSDcrys3.2");
+  TH2F *PSDcrys33 = (TH2F*)input->Get("Fingers/PSDcrys3.3");
+  TH2F *PSDcrys34 = (TH2F*)input->Get("Fingers/PSDcrys3.4");
+  TH2F *PSDcrys35 = (TH2F*)input->Get("Fingers/PSDcrys3.5");
+  
+  float rightM = 0.10;
+  float leftM = 0.1;
+  float botM = 0.001;
+  
+  
+  c1->cd(1);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys30->Draw();
+  
+  c1->cd(2);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys31->Draw();
+  
+  c1->cd(3);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys32->Draw();
+  
+  c1->cd(4);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys33->Draw();
+  
+  c1->cd(5);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys34->Draw();
+  
+  c1->cd(6);
+  c1->SetRightMargin(rightM);
+  c1->SetLeftMargin(leftM);
+  c1->SetBottomMargin(botM);
+  c1->SetTopMargin(botM);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  PSDcrys35->Draw();
+  
+  if (save) c1->Print("PSDCrys_1279.gif", "gif");
+  
+}

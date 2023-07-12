@@ -1,0 +1,45 @@
+#include <stdexcept>
+#include <sstream>
+#include <iomanip>
+
+void plot_fingers()
+{
+  bool save = true;
+  
+  TCanvas *c1 = new TCanvas("c1", "fingers");
+  if (save) c1->SetWindowSize(1600,1200);
+  //if (!save) c1->SetWindowSize(1280,960);
+  c1->SetRightMargin(0.1);
+  c1->SetLeftMargin(0.12);
+  c1->SetBottomMargin(0.12);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  //change stats box info
+  //gStyle->SetPalette(50,kRainBow);
+  gStyle->SetOptStat("ne");
+  gStyle->SetStatX(0.35);
+  gStyle->SetStatY(0.90);
+  
+  TFile *input = new TFile("../sort1289.root", "read");
+
+  TH2F *fingerplot = (TH2F*)input->Get("Fingers/fingerplotlowgain");
+
+  fingerplot->SetTitle("Gain = 3, 1500V");
+
+  fingerplot->GetXaxis()->SetTitle("ch1.0.C");
+  //fingerplot->GetXaxis()->SetRangeUser(650,2000);
+  fingerplot->GetXaxis()->CenterTitle();
+  fingerplot->GetXaxis()->SetTitleSize(0.05);
+  fingerplot->GetXaxis()->SetTitleOffset(0.9);
+  fingerplot->GetYaxis()->SetTitle("ch3.0.C");
+  //fingerplot->GetYaxis()->SetRangeUser(650,2000);
+  fingerplot->GetYaxis()->CenterTitle();
+  fingerplot->GetYaxis()->SetTitleSize(0.05);
+  fingerplot->GetYaxis()->SetTitleOffset(1.2);
+
+  fingerplot->Draw();
+
+  if (save) c1->Print("fingers1289lowgain.gif", "gif");
+}
+

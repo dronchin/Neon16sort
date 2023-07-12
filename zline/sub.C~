@@ -1,0 +1,130 @@
+{
+   double int_c = 2.74;
+   double int_cd2 = 16.67;
+   double int_ch2 = 10.5;
+   double ratio = 1.52;
+   double ratio_ch2 = 1.31;
+   double ff=1;
+   ratio=ff*ratio;
+   TCanvas canvas("sub","",800,800);
+   canvas.Divide(2,2);
+   canvas.cd(1);
+   TFile file_cd2("sort_he6_cd2.root");
+   TString histname="InvMass/7Li/Erel_7Li_p6He";
+   TH1I* hist_cd2 = (TH1I*) file_cd2.Get(histname);
+   TFile file_c("sort_he6_c.root");
+   TH1I* hist_c = (TH1I*) file_c.Get(histname);
+   TFile file_ch2("sort_he6_ch2.root");
+   TH1I* hist_ch2 = (TH1I*) file_ch2.Get(histname);
+
+   TH2S frame("frame","",10,0,7,10,0,200);
+   frame.GetXaxis()->SetTitle("E_{T} (MeV)");
+   frame.GetYaxis()->SetTitle("Counts");
+   frame.GetXaxis()->CenterTitle();
+   frame.GetYaxis()->CenterTitle();
+   frame.SetStats(kFALSE);
+   frame.Draw("same");
+
+   hist_cd2->Draw("same");
+
+   hist_c->Scale(int_cd2/(int_c*ratio));
+   //for (int i=0;i<400;i++) hist_c->SetBinError(i,0.);
+   hist_c->SetLineColor(2);
+   hist_c->Draw("Same");
+
+
+   hist_ch2->Scale(int_cd2/(int_ch2*ratio_ch2));
+   //for (int i=0;i<400;i++) hist_c->SetBinError(i,0.);
+   hist_ch2->SetLineColor(3);
+   hist_ch2->Draw("Same");
+
+   TLatex tt;
+   tt.SetNDC();
+   tt.DrawLatex(.8,.8,"#it{p}+^{6}He");
+
+   canvas.cd(2);
+   TH1I* hist_da_cd2 = (TH1I*) file_cd2.Get("InvMass/6Li/Erel_6Li_da");
+   TH1I* hist_da_c = (TH1I*) file_c.Get("InvMass/6Li/Erel_6Li_da");
+
+   TH2S frame2("frame2","",10,0,5,10,0,2700);
+   frame2.GetXaxis()->SetTitle("E_{T} (MeV)");
+   frame2.GetYaxis()->SetTitle("Counts");
+   frame2.GetXaxis()->CenterTitle();
+   frame2.GetYaxis()->CenterTitle();
+   frame2.SetStats(kFALSE);
+   frame2.Draw("same");
+
+
+   hist_da_cd2->Draw("same");
+   hist_da_c->Scale(int_cd2/(int_c*ratio));
+   for (int i=0;i<400;i++) hist_da_c->SetBinError(i,0.);
+   hist_da_c->SetLineColor(2);
+   hist_da_c->Draw("same");
+
+   tt.DrawLatex(.8,.8,"#it{d}+#alpha");
+
+   canvas.cd(3);
+   TH1I* hist_ta_cd2 = (TH1I*) file_cd2.Get("InvMass/7Li/Erel_7Li_ta");
+   TH1I* hist_ta_c = (TH1I*) file_c.Get("InvMass/7Li/Erel_7Li_ta");
+
+   TH2S frame3("frame3","",10,0,5,10,0,120);
+   frame3.GetXaxis()->SetTitle("E_{T} (MeV)");
+   frame3.GetYaxis()->SetTitle("Counts");
+   frame3.GetXaxis()->CenterTitle();
+   frame3.GetYaxis()->CenterTitle();
+   frame3.SetStats(kFALSE);
+   frame3.Draw("same");
+
+
+   hist_ta_cd2->Draw("same");
+   hist_ta_c->Scale(int_cd2/(int_c*ratio));
+   for (int i=0;i<400;i++) hist_ta_c->SetBinError(i,0.);
+   hist_ta_c->SetLineColor(2);
+   hist_ta_c->Draw("same");
+
+   tt.DrawLatex(.8,.8,"#it{t}+#alpha");
+
+
+   canvas.cd(4);
+   TH1I* hist_pa_cd2 = (TH1I*) file_cd2.Get("InvMass/5Li/Erel_5Li_pa");
+   TH1I* hist_pa_c = (TH1I*) file_c.Get("InvMass/5Li/Erel_5Li_pa");
+
+   TH2S frame4("frame4","",10,0,5,10,0,120);
+   frame4.GetXaxis()->SetTitle("E_{T} (MeV)");
+   frame4.GetYaxis()->SetTitle("Counts");
+   frame4.GetXaxis()->CenterTitle();
+   frame4.GetYaxis()->CenterTitle();
+   frame4.SetStats(kFALSE);
+   frame4.Draw("same");
+
+
+   hist_pa_cd2->Draw("same");
+   hist_pa_c->Scale(int_cd2/(int_c*ratio));
+   for (int i=0;i<400;i++) hist_pa_c->SetBinError(i,0.);
+   hist_pa_c->SetLineColor(2);
+   hist_pa_c->Draw("same");
+
+   tt.DrawLatex(.8,.8,"#it{p}+#alpha");
+   TCanvas canvas2("sub2","",800,800);
+   canvas2.cd();
+
+   hist_cd2->SetMarkerStyle(20);
+   hist_cd2->Draw("PE");  
+ //for (int i=0;i<400;i++) hist_c->SetBinError(i,0.);
+   hist_c->SetLineColor(2);
+   hist_c->SetMarkerStyle(21);
+   hist_c->SetMarkerColor(2);
+   hist_c->Rebin(2);
+   hist_c->Scale(.5);
+   hist_c->Draw("Same PE");
+
+
+
+   hist_ch2->SetLineColor(3);
+   hist_ch2->SetMarkerStyle(21);
+   hist_ch2->SetMarkerColor(3);
+   hist_ch2->Rebin(2);
+   hist_ch2->Scale(.5);
+   hist_ch2->Draw("Same PE");
+
+}

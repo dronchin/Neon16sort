@@ -1,0 +1,62 @@
+void plot_PSD()
+{
+  bool save = true;
+  
+  TCanvas *c1 = new TCanvas("c1", "PSD");
+  if (save) c1->SetWindowSize(1600,1200);
+  //if (!save) c1->SetWindowSize(1280,960);
+  c1->Divide(3,2);
+  c1->cd(1);
+  //c1->SetRightMargin(0.1);
+  //c1->SetLeftMargin(0.12);
+  //c1->SetBottomMargin(0.12);
+  gPad->SetTickx();
+  gPad->SetTicky();
+  gPad->SetLogz();
+  //change stats box info
+  //gStyle->SetOptStat("ne");
+  //gStyle->SetStatX(0.35);
+  //gStyle->SetStatY(0.90);
+  
+  TFile *input = new TFile("../sort1278.root", "read");
+
+  TH2F *PSDcrys10 = (TH2F*)input->Get("Fingers/PSDcrys1.0");
+  TH2F *PSDcrys11 = (TH2F*)input->Get("Fingers/PSDcrys1.1");
+  TH2F *PSDcrys12 = (TH2F*)input->Get("Fingers/PSDcrys1.2");
+  TH2F *PSDcrys13 = (TH2F*)input->Get("Fingers/PSDcrys1.3");
+  TH2F *PSDcrys14 = (TH2F*)input->Get("Fingers/PSDcrys1.4");
+  TH2F *PSDcrys15 = (TH2F*)input->Get("Fingers/PSDcrys1.5");
+  
+  TH2F *PSDcrys30 = (TH2F*)input->Get("Fingers/PSDcrys3.0");
+  TH2F *PSDcrys31 = (TH2F*)input->Get("Fingers/PSDcrys3.1");
+  TH2F *PSDcrys32 = (TH2F*)input->Get("Fingers/PSDcrys3.2");
+  TH2F *PSDcrys33 = (TH2F*)input->Get("Fingers/PSDcrys3.3");
+  TH2F *PSDcrys34 = (TH2F*)input->Get("Fingers/PSDcrys3.4");
+  TH2F *PSDcrys35 = (TH2F*)input->Get("Fingers/PSDcrys3.5");
+  
+  c1->cd(1);
+  
+  PSDcrys10->SetStats(0);
+  PSDcrys10->Draw();
+  
+  c1->cd(2);
+  PSDcrys11->SetStats(0);
+  PSDcrys11->Draw();
+  
+  c1->cd(3);
+  PSDcrys12->SetStats(0);
+  PSDcrys12->Draw();
+  
+  c1->cd(4);
+  PSDcrys13->SetStats(0);
+  PSDcrys13->Draw();
+  
+  c1->cd(5);
+  PSDcrys14->SetStats(0);
+  PSDcrys14->Draw();
+  
+  c1->cd(6);
+  PSDcrys15->SetStats(0);
+  PSDcrys15->Draw();
+  
+}
