@@ -21,7 +21,7 @@ det::det(histo * Histo1)
   Gobbi = new gobbi(Histo); //pass in histo pointer
   Gobbi->SetTarget(Targetdist, TargetThickness);
 
-  WW = new Tele(Histo); //maybe i want to seperate this here?
+  WW = new Silicon();
 }
 
 det::~det()

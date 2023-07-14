@@ -1,6 +1,9 @@
 #ifndef HINP_H
 #define HINP_H
 #include <cstdlib>
+#include <iostream>
+#include <iomanip>
+
 /**
  * !\brief handles the readout from Washu HIMP chips
  * This class deals with the read out from HIMP chips for silicon
@@ -26,10 +29,5 @@ class HINP
   unsigned short time[maxlen];
 
   bool unpackSi_HINP4(unsigned short *&point);
-
-  int multEfront;
-  int multEback;
-  int multdE;
-
 };
 #endif

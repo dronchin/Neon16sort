@@ -1,5 +1,4 @@
 #include "calibrate.h"
-#include "math.h"
 
 /**
  * Constructor
@@ -111,7 +110,6 @@ float calibrate::getTime(int itele,int istrip,float channel)
 {
   return channel + Coeff[itele][istrip].intercept;
 }
-
 
 float calibrate::reverseCal(int itele, int istrip, float energy)
 {

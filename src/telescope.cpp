@@ -1,14 +1,14 @@
-//class dealing with a single Hira Si telescope
+//Nicolas Dronchi 2023_07_13
+//class dealing with a single dE-E-E [Si-Si-CsI] telescope
 
-#include "silicon.h"
+#include "telescope.h"
 
 using namespace std;
 
 //**********************************************************
   //constructor
-silicon::silicon(float thick0)
+telescope::telescope()
 {
-//  TargetThickness = thick0;
   SiWidth = 6.45;
   //switch which loss file is used depending on the target.
   losses = new CLosses(6,"_CD2.loss");
@@ -18,7 +18,7 @@ silicon::silicon(float thick0)
 
 //***********************************************************
 //destructor
-silicon::~silicon()
+telescope::~telescope()
 {
   delete losses;
   delete Ran;
@@ -26,7 +26,7 @@ silicon::~silicon()
 }
 
 //inialization
-void silicon::init(int id0)
+void telescope::init(int id0)
 {
   id = id0;
   //-ND checked 5/12/2022 these distances are correct compared to the simulation
@@ -43,14 +43,15 @@ void silicon::init(int id0)
 
 }
 
-void silicon::SetTargetDistance(double dist)
+void telescope::SetTargetDistance(double dist, float thick)
 {
-  for (int i=0;i<10;i++) Solution[i].SetTargetDistance(dist);
+  for (int i=0;i<10;i++){ Solution[i].SetTargetDistance(dist); }
+  TargetThickness = thick;
 }
 
 
 //********************************************************
-void silicon::reset()
+void telescope::reset()
 {
   maxFront = 0.;
   multFront = 0;
@@ -70,18 +71,18 @@ void silicon::reset()
 
 //*********************************************************
   //????????
-void silicon::Reduce()
+void telescope::Reduce()
 {
   multFront = Front.Reduce("F");
   multBack = Back.Reduce("B");
 }
 
 //***********************************************************
-// subroutine to identify a single particle from strip data
-int silicon::simpleFront()
+// subroutine to identify a single particle from dE-E [Si-Si] data
+int telescope::SimpleSiSi()
 {
-  int dstrip = abs(Front.Order[0].strip - Delta.Order[0].strip) ;
-  if (dstrip < -1 && dstrip > 3) 
+  int dstrip = abs(Front.Order[0].strip - Delta.Order[0].strip);
+  if (dstrip > 3)
   {
     Nsolution = 0;
     return 0;
@@ -127,7 +128,7 @@ int silicon::simpleFront()
 
 //*************************************
 //finds particle identification - checks to see if particle is inside of z - bananas  
-int silicon::getPID()
+int telescope::getPID()
 {
   int pidmulti = 0;
 
@@ -154,7 +155,7 @@ int silicon::getPID()
   return pidmulti;
 }
 
-int silicon::calcEloss()
+int telescope::calcEloss()
 {
   for (int isol=0; isol<Nsolution; isol++)
   {
@@ -179,48 +180,7 @@ int silicon::calcEloss()
     Solution[isol].Ekin = ein;
     //calc momentum vector, energyTot, and velocity
     Solution[isol].getMomentum();
-
-
-    //protons can punch through at high energies
-    if (Solution[isol].iA == 1 && Solution[isol].iZ == 1)
-    {
-      if (Solution[isol].Ekin > 15.5)
-      {
-        Solution[isol].iA = 0;
-        Solution[isol].iZ = 0;
-        Solution[isol].Ekin = 0;
-        return 0;
-      }
-    }
-
-    //deuterons can punch through
-    if (Solution[isol].iA == 2 && Solution[isol].iZ == 1)
-    {
-      if (Solution[isol].Ekin > 20.5)
-      {
-        Solution[isol].iA = 0;
-        Solution[isol].iZ = 0;
-        Solution[isol].Ekin = 0;
-        return 0;
-      }
-    }
-    //Tritons can punch through
-    if (Solution[isol].iA == 3 && Solution[isol].iZ == 1)
-    {
-      if (Solution[isol].Ekin > 24)
-      {
-        Solution[isol].iA = 0;
-        Solution[isol].iZ = 0;
-        Solution[isol].Ekin = 0;
-        return 0;
-      }
-    }
-
-
   }
-
-
-
 
   return 1;
 }
@@ -230,7 +190,7 @@ int silicon::calcEloss()
 
 //****************************************************
 //recursive subroutine  used for multihit subroutine
-void silicon::loop(int depth)
+void telescope::loop(int depth)
 {
   //cout << "depth=" << depth << " " << zline[0].n<< endl;
   if (depth == NestDim) //depth starts at 0
@@ -283,15 +243,17 @@ void silicon::loop(int depth)
 
 //***************************************************
 //extracts multiple particle from strip data 
-int silicon::multiHit()
+int telescope::multiHit()
 {
   int Ntries = min(Front.Nstore,Back.Nstore);
   Ntries = min(Ntries,Delta.Nstore);
 
-  if (Ntries > 4) Ntries =4;
+  if (Ntries > 4)
+    Ntries = 4;
+  if (Ntries <= 0)
+    return 0;
+
   Nsolution = 0;
-  if (Ntries <= 0) return 0;
-  
   for (NestDim = Ntries;NestDim>0;NestDim--)
   {
     dstripMin = 1000;
@@ -350,7 +312,7 @@ int silicon::multiHit()
 
 //*******************************************************************************
   //calculates the x-y position and angles in the array in cm
-void silicon::position(int isol)
+void telescope::position(int isol)
 {
   float Xpos,Ypos;
 
@@ -393,7 +355,7 @@ void silicon::position(int isol)
 
 //*******************************************************************************
   //calculates the x-y position in the array in cm
-void silicon::positionC(int isol)
+void telescope::positionC(int isol)
 {
   float Xpos,Ypos;
 

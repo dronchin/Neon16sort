@@ -1,17 +1,8 @@
 #include "HINP.h"
-#include <iostream>
-#include <iomanip>
+
 using namespace std;
 
 //unpacking the XLM with ADC on the CHIP BOARDS (HINP 4)
-
-//constructor sets multiplicities to 0
-HINP::HINP()
-{
-  multEfront = 0;
-  multEback = 0;
-  multdE = 0;
-}
 
 
 /* Example in the buffer
@@ -30,11 +21,6 @@ HINP::HINP()
 
 bool HINP::unpackSi_HINP4(unsigned short *&point)
 {
-  //reset multiplicities at the start
-  multEfront = 0;
-  multEback = 0;
-  multdE = 0;
-
   unsigned short *endpos = point;
   unsigned short words = *point++;
   endpos += words;

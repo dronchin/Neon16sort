@@ -13,17 +13,20 @@ gobbi::gobbi(histo * Histo1)
 
   for (int id=0;id<4;id++)
   {
-    Silicon[id] = new silicon();
-    Silicon[id]->init(id); //tells Silicon what position it is in
+    Telescope[id] = new telescope();
+    Telescope[id]->init(id); //tells Telescope what position it is in
   }
 
+                        //Ntele, Nstrip, filename, polynomial order, weave strips?
   FrontEcal = new calibrate(4, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
   BackEcal = new calibrate(4, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
   DeltaEcal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
+  CsIEcal = new calibrate(4, 4, "Cal/GobbiDeltaEcal.dat", 1, false);
 
   FrontTimecal = new calibrate(4, Histo->channum, "Cal/GobbiFrontTimecal.dat",1, false);
   BackTimecal = new calibrate(4, Histo->channum, "Cal/GobbiBackTimecal.dat",1, false);  
   DeltaTimecal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaTimecal.dat",1, false);
+  CsITimecal = new calibrate(4, 4, "Cal/GobbiDeltaTimecal.dat", 1, false);
 }
 
 gobbi::~gobbi()
@@ -31,25 +34,29 @@ gobbi::~gobbi()
   delete FrontEcal;
   delete BackEcal;
   delete DeltaEcal;
+  delete CsIEcal;
   delete FrontTimecal;
   delete BackTimecal;
   delete DeltaTimecal;
-  //delete[] Silicon; //not needed as it is in automatic memory, didn't call with new
+  delete CsITimecal;
+  //delete[] Telescope; //not needed as it is in automatic memory, didn't call with new
 }
 
 void gobbi::SetTarget(double Targetdist, float TargetThickness)
 {
-  for (int id=0;id<4;id++)
-  {
-    Silicon[id]->SetTargetDistance(Targetdist);
-    Silicon[id]->SetTargetThickness(TargetThickness);
-  }
+  for (int id=0;id<4;id++){ Telescope[id]->SetTarget(Targetdist, TargetThickness); }
+}
+void gobbi::reset()
+{
+  //reset the Telescope class
+  for (int i=0;i<4;i++){ Telescope[i]->reset();}
+  //make sure to reset the CsI here as well, whatever they end up looking like
 }
 
 void gobbi::addFrontEvent(int quad, unsigned short chan, unsigned short high, 
                                     unsigned short low, unsigned short time)
 {
-  //Use calibration to get Energy and fill elist class in silicon
+  //Use calibration to get Energy and fill elist class in Telescope
   float Energy = FrontEcal->getEnergy(quad, chan, high);
   float time = FrontTimecal->getTime(quad, chan, time);
 
@@ -66,14 +73,14 @@ void gobbi::addFrontEvent(int quad, unsigned short chan, unsigned short high,
 
   //TODO this is a good spot to throw an if statement and make software thresholds
   //if (Energy > .5)
-  Silicon[quad]->Front.Add(chan, Energy, low, high, time);
-  Silicon[quad]->multFront++;
+  Telescope[quad]->Front.Add(chan, Energy, low, high, time);
+  Telescope[quad]->multFront++;
 }
 
 void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high, 
                                    unsigned short low, unsigned short time)
 {
-  //Use calibration to get Energy and fill elist class in silicon
+  //Use calibration to get Energy and fill elist class in Telescope
   float Energy = BackEcal->getEnergy(quad, chan, high);
   float time = BackTimecal->getTime(quad, chan, time);
 
@@ -90,14 +97,14 @@ void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high,
 
   //TODO this is a good spot to throw an if statement and make software thresholds
   //if (Energy > .5)
-  Silicon[quad]->Back.Add(chan, Energy, low, high, time);
-  Silicon[quad]->multBack++;
+  Telescope[quad]->Back.Add(chan, Energy, low, high, time);
+  Telescope[quad]->multBack++;
 }
 
 void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high, 
                                     unsigned short low, unsigned short time)
 {
-  //Use calibration to get Energy and fill elist class in silicon
+  //Use calibration to get Energy and fill elist class in Telescope
   float Energy = DeltaEcal->getEnergy(quad, chan, high);
   float time = DeltaTimecal->getTime(quad, chan, time);
 
@@ -114,8 +121,8 @@ void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high,
 
   //TODO this is a good spot to throw an if statement and make software thresholds
   //if (Energy > .5)
-  Silicon[quad]->Delta.Add(chan, Energy, low, high, time);
-  Silicon[quad]->multDelta++;
+  Telescope[quad]->Delta.Add(chan, Energy, low, high, time);
+  Telescope[quad]->multDelta++;
 }
 
 void gobbi::addCsIEvent(int quad, unsigned short chan, unsigned short high, 
@@ -127,12 +134,7 @@ void gobbi::addCsIEvent(int quad, unsigned short chan, unsigned short high,
   return
 }
 
-void gobbi::reset()
-{
-  //reset the Silicon class
-  for (int i=0;i<4;i++){ Silicon[i]->reset();}
-  //make sure to reset the CsI here as well, whatever they end up looking like
-}
+
 
 void gobbi::SiNeigbours()
 {
@@ -140,9 +142,9 @@ void gobbi::SiNeigbours()
   //strips. Generally the signal is proportional to the total signal in the Si.
   for (int id=0;id<4;id++) 
   {
-    Silicon[id]->Front.Neighbours(id);
-    Silicon[id]->Back.Neighbours(id);
-    Silicon[id]->Delta.Neighbours(id);
+    Telescope[id]->Front.Neighbours(id);
+    Telescope[id]->Back.Neighbours(id);
+    Telescope[id]->Delta.Neighbours(id);
   }
 }
 
@@ -152,54 +154,95 @@ int gobbi::matchTele()
 
   //look at all the information/multiplicities and determine how to match up 
   //the information
-  totMulti = 0;
+  multiSiSi = 0;
+  multiSiSiCsI = 0;
+  int Nmatch = 0;
   for (int id=0;id<4;id++) 
   {
-    //save comp time if the event is obvious
-    if (Silicon[id]->Front.Nstore ==1 && Silicon[id]->Back.Nstore ==1 && Silicon[id]->Delta.Nstore ==1)
+    //look for a full stack Si-Si-CsI hit or just the Si-Si hit
+    if (Telescope[id]->CsI.Nstore >= 1 && Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
     {
-      totMulti += Silicon[id]->simpleFront();
-      //cout << "simple " << totMulti << endl;
+      //look for the simple case first
+      if (Telescope[id]->CsI.Nstore == 1 && Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1 && Telescope[id]->Delta.Nstore ==1)
+      {
+        Nmatch = Telescope[id]->simpleSiSiCsI();
+        NsimpleSiSiCsI += Nmatch;
+        multiSiSiCsI += Nmatch;
+      }
+      else //then look at the multihit case
+      {
+        Nmatch = Telescope[id]->multiHitSiSiCsI();
+        NmultiSiSiCsI += Nmatch;
+        multiSiSiCsI += Nmatch;
+      }
     }
-    else //if higher multiplicity then worry about picking the right one
-    {    //this also handles the case where Nstore=0 for any of the chanels
-      totMulti += Silicon[id]->multiHit();
-      //cout << "multi " << totMulti << endl;
+    //purposely coded to exclude events that likely puched through second Si
+    //otherwise could cause a lot of noise in Si-Si DEE plot 
+    else if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
+    {
+      //save comp time if the event is obvious
+      if (Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1 && Telescope[id]->Delta.Nstore ==1)
+      {
+        Nmatch = Telescope[id]->simpleFront();
+        NsimpleSiSi += Nmatch;
+        multiSiSi += Nmatch;
+      }
+      else //if higher multiplicity then worry about picking the right one
+      {
+        Nmatch = Telescope[id]->multiHit();
+        NmultiSiSi += Nmatch;
+        multiSiSi += Nmatch;
+      }
     }
   }
 
   //plot E vs dE bananas and hitmap of paired dE,E events
   for (int id=0;id<4;id++) 
   {
-    for (int isol=0;isol<Silicon[id]->Nsolution; isol++)
+    for (int isol=0;isol<Telescope[id]->Nsolution; isol++)
     {
       //fill in hitmap of gobbi
-      Silicon[id]->position(isol); //calculates x,y pos, and lab angle
+      Telescope[id]->position(isol); //calculates x,y pos, and lab angle
+      Histo->xyhitmap->Fill(Telescope[id]->Solution[isol].Xpos, 
+                            Telescope[id]->Solution[isol].Ypos);
+
+      bool isSiCsI = Telescope[id]->isSiCsI()
 
       //fill in dE-E plots to select particle type
-      //TODO there is a correction on the de for angle, probably also required for E now
-      float Ener = Silicon[id]->Solution[isol].energy + Silicon[id]->Solution[isol].denergy*(1-cos(Silicon[id]->Solution[isol].theta));
+      //TODO there is a different correction on the de when thick Si is dE, probably also required for E now
+      if (isSiCsI)
+      {
+        float Ener = Telescope[id]->Solution[isol].energy + 
+            Telescope[id]->Solution[isol].denergy*(1-cos(Telescope[id]->Solution[isol].theta));
+      
+        Histo->DEE_CsI[id]->Fill(Ener, Telescope[id]->Solution[isol].denergy*
+                                    cos(Telescope[id]->Solution[isol].theta));
+      }
+      else
+      {
+        float Ener = Telescope[id]->Solution[isol].energy + 
+            Telescope[id]->Solution[isol].denergy*(1-cos(Telescope[id]->Solution[isol].theta));
 
-      Histo->DEE[id]->Fill(Ener, Silicon[id]->Solution[isol].denergy*cos(Silicon[id]->Solution[isol].theta));
-
-      Histo->xyhitmap->Fill(Silicon[id]->Solution[isol].Xpos, Silicon[id]->Solution[isol].Ypos);
+        Histo->DEE[id]->Fill(Ener, Telescope[id]->Solution[isol].denergy*
+                                    cos(Telescope[id]->Solution[isol].theta));
+      }
       
     }
   }
 
-  //calculate and determine particle identification PID in the silicon
+  //calculate and determine particle identification PID in the Telescope
   int Pidmulti = 0;
   for (int id=0;id<4;id++) 
   {
-    Pidmulti += Silicon[id]->getPID();
+    Pidmulti += Telescope[id]->getPID();
   }
 
   //calc sumEnergy,then account for Eloss in target, then set Ekin and momentum of solutions
-  //Eloss files are loaded in silicon
+  //Eloss files are loaded in Telescope
   for (int id=0;id<4;id++) 
   {
-    Silicon[id]->calcEloss();
+    Telescope[id]->calcEloss();
   }
 
-  return totMulti;
+  return multiSiSi + multiSiSiCsI;
 }

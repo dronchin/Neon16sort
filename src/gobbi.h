@@ -20,21 +20,31 @@ class Gobbi
   calibrate * FrontEcal;
   calibrate * BackEcal;
   calibrate * DeltaEcal;
+  calibrate * CsIEcal;
+
   calibrate * FrontTimecal;
   calibrate * BackTimecal;
   calibrate * DeltaTimecal;
-
+  calibrate * CsITimecal;
 
   void SetTarget(double Targetdist, float TargetThickness);
+  void reset();
 
   void addFrontEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
   void addBackEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
   void addDeltaEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
   void addCsIEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
 
-  void reset();
+
   void SiNeigbours();
   int matchTele();
+  int multiSiSi;
+  int multiSiSiCsI;
+
+  int NsimpleSiSiCsI = 0;
+  int NmultiSiSiCsI = 0;
+  int NsimpleSiSi = 0;
+  int NmultiSiSi = 0;
 
 };
 
