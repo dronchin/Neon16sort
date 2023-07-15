@@ -8,7 +8,6 @@
 #include "correl2.h"
 #include "calibrate.h"
 
-
 //Nicolas Dronchi 2022_04_04
 //Class written to handle all specifics of the Gobbi array
 //such as communicating with HINP, calibrations, Checking for charge sharing in neighbor
@@ -34,7 +33,9 @@ class Gobbi
 
 
   histo * Histo;
-  HINP * ADC;
+  HINP * SiADC;
+  caen * CsIADC;
+  TDC1190 * TDC;
   calibrate * FrontEcal;
   calibrate * BackEcal;
   calibrate * DeltaEcal;

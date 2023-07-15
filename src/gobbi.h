@@ -6,6 +6,21 @@
 #include "silicon.h"
 #include "calibrate.h"
 
+//two structures for matching up CsI times and Energies
+struct dataE
+{
+  int ienergy;
+  int id;
+  int itime;
+  float energy;
+};
+struct dataT
+{
+  int itime;
+  int id;
+};
+
+
 class Gobbi
 {
  public:
@@ -45,6 +60,12 @@ class Gobbi
   int NmultiSiSiCsI = 0;
   int NsimpleSiSi = 0;
   int NmultiSiSi = 0;
+
+  int NE;
+  int NT;
+  dataE DataE[56];
+  dataT DataT[56];
+  void MatchCsIEnergyTime();
 
 };
 

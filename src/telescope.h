@@ -48,9 +48,11 @@ class telescope
   int imaxFront;
   int imaxBack;
   int imaxDelta;
+
   int multFront;
   int multBack;
   int multDelta;
+  int multCsI;
 
   elist Front;
   elist Back;

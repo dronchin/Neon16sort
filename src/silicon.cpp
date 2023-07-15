@@ -13,6 +13,10 @@ silicon::silicon(float thick0)
   //switch which loss file is used depending on the target.
   losses = new CLosses(6,"_CD2.loss");
 
+  FrontEcal = new calibrate(4, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
+  BackEcal = new calibrate(4, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
+  DeltaEcal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
+
   Ran = new TRandom();
 }
 

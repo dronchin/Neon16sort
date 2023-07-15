@@ -136,6 +136,63 @@ void gobbi::addCsIEvent(int quad, unsigned short chan, unsigned short high,
 
 
 
+
+void gobbi::MatchCsIEnergyTime()
+{
+  int Nfound = 0;
+  int Nnotfound = 0;
+  // match up energies to times
+  for (int ie=0;ie<NE;ie++)
+  {
+    DataE[ie].itime = -1;
+    bool found = false;
+    for (int it=0;it<NT;it++)
+    {
+      if (DataE[ie].id == DataT[it].id)           //we have matched
+      {
+        found  = true;
+        DataE[ie].itime = DataT[it].itime;
+
+        Nfound++;
+
+        //TODO need some logic to decide which quadrant/telescope to save to
+        //i've layed out the basic idea here
+        //add event to telescope elsit of csi
+        int id = DataE[ie].id
+        if (id <4)
+        {
+          int quad = 0;
+          int chan = DataE[ie].id;
+          //CsI energy calibration here!
+          DataE[ie].Energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
+          float time = CsITimecal->getTime(quad, chan, time);
+
+          Telescope[quad]->CsI.Add(chan, DataE[ie].Energy, 0, DataE[ie].ienergy, time);
+          Telescope[quad]->multCsI++;
+
+          //TODO add matched histo, should also add unmatched histos earlier
+          Histo->
+
+
+        }
+        if(id < 8 and id >= 4)
+        {
+          int quad = 1;
+          int chan = DataE[ie].id - 4; //shift id so it is 0,1,2,3
+          //CsI energy calibration here!
+          DataE[ie].Energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
+          float time = CsITimecal->getTime(quad, chan, time);
+
+          Telescope[quad]->CsI.Add(chan, DataE[ie].Energy, 0, DataE[ie].ienergy, time);
+          Telescope[quad]->multCsI++;
+        }
+      }
+    }
+
+  }
+}
+
+
 void gobbi::SiNeigbours()
 {
   //When a charged particle moves through Si, there is cross talk between neighbouring
@@ -155,19 +212,19 @@ int gobbi::matchTele()
   //look at all the information/multiplicities and determine how to match up 
   //the information
   multiSiSi = 0;
-  multiSiSiCsI = 0;
+  multiSiCsI = 0;
   int Nmatch = 0;
   for (int id=0;id<4;id++) 
   {
-    //look for a full stack Si-Si-CsI hit or just the Si-Si hit
-    if (Telescope[id]->CsI.Nstore >= 1 && Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
+    //If there is any CsI info, use Si-CsI hit scheme
+    if (Telescope[id]->CsI.Nstore >= 1)
     {
       //look for the simple case first
-      if (Telescope[id]->CsI.Nstore == 1 && Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1 && Telescope[id]->Delta.Nstore ==1)
+      if (Telescope[id]->CsI.Nstore == 1 && Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1)
       {
-        Nmatch = Telescope[id]->simpleSiSiCsI();
-        NsimpleSiSiCsI += Nmatch;
-        multiSiSiCsI += Nmatch;
+        Nmatch = Telescope[id]->simpleSiCsI();
+        NsimpleSiCsI += Nmatch;
+        multiSiCsI += Nmatch;
       }
       else //then look at the multihit case
       {
@@ -176,7 +233,7 @@ int gobbi::matchTele()
         multiSiSiCsI += Nmatch;
       }
     }
-    //purposely coded to exclude events that likely puched through second Si
+    //Need to be careful with puch-through events here
     //otherwise could cause a lot of noise in Si-Si DEE plot 
     else if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
     {

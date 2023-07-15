@@ -43,7 +43,6 @@ bool HINP::unpackSi_HINP4(unsigned short *&point)
   {
     point+=10;
     return false;
-    //return true; // KB - 10/26/20
   }
 
   point += 2;
@@ -125,4 +124,3 @@ bool HINP::unpackSi_HINP4(unsigned short *&point)
 
   return true;
 }
-

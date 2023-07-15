@@ -17,7 +17,6 @@ det::det(histo * Histo1)
   Targetdist = 23.95; //cm //distance from target to front of Gobbi
   TargetThickness = 2.65;//mg/cm^2 for CD2 tar1
 
-
   Gobbi = new gobbi(Histo); //pass in histo pointer
   Gobbi->SetTarget(Targetdist, TargetThickness);
 
@@ -37,21 +36,36 @@ bool Det::unpack(unsigned short *point)
   WW->reset()
 
   bool stat = true;
-  stat = ADC->unpackSi_HINP4(point); //unpack all the HINP chips
+  stat = SiADC->unpackSi_HINP4(point); //unpack all the HINP chips
   if (!stat)
   {
-    cout << "Bad hira" << endl;
+    cout << "Bad Si-HINP" << endl;
+    return stat;
+  }
+  //the point was passed by reference and is a continuuation of the spot in data stream
+  stat = CsIADC->unpackCsI(point); //unpack all the HINP chips
+  if (!stat)
+  {
+    cout << "Bad CsI" << endl;
+    return stat;
+  }
+  //TODO it is unclear, i think the TDC point is at the end after the CsI ADC????
+  stat = TDC->read(point); //unpack all the HINP chips
+  if (!stat)
+  {
+    cout << "Bad TDC" << endl;
     return stat;
   }
 
-  for (int i=0; i<ADC->NstripsRead; i++)
+
+  for (int i=0; i<SiADC->NstripsRead; i++)
   {
     //check for these impossible event types, then print chip# and chan#
-    if (ADC->board[i] > 12 || ADC->chan[i] >= Histo->channum)
+    if (SiADC->board[i] > 12 || SiADC->chan[i] >= Histo->channum)
     {
-      cout << "ADC->NstripsRead " << ADC->NstripsRead << endl;
+      cout << "ADC->NstripsRead " << SiADC->NstripsRead << endl;
       cout << "i " << i << endl;
-      cout << "Board " << ADC->board[i] << " and chan " << ADC->chan[i];
+      cout << "Board " << SiADC->board[i] << " and chan " << SiADC->chan[i];
       cout << " unpacked but not saved" << endl;
       return true;
     }
@@ -61,35 +75,69 @@ bool Det::unpack(unsigned short *point)
 
     //position in board tells you what you have and what quadrant you are in
     //All Gobbi SiE detectors
-    if (ADC->board[i] == 1 || ADC->board[i] == 3 || ADC->board[i] == 5 || ADC->board[i] == 7)
+    if (SiADC->board[i] == 1 || SiADC->board[i] == 3 || SiADC->board[i] == 5 || SiADC->board[i] == 7)
     {
-      int quad = (ADC->board[i] - 1)/2; 
-      Gobbi->addFrontEvent(quad, ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      int quad = (SiADC->board[i] - 1)/2; 
+      Gobbi->addFrontEvent(quad, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
-    if (ADC->board[i] == 2 || ADC->board[i] == 4 || ADC->board[i] == 6 || ADC->board[i] == 8)
+    if (SiADC->board[i] == 2 || SiADC->board[i] == 4 || SiADC->board[i] == 6 || SiADC->board[i] == 8)
     {
-      int quad = (ADC->board[i]/2)-1;
-      Gobbi->addBackEvent(quad, ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      int quad = (SiADC->board[i]/2)-1;
+      Gobbi->addBackEvent(quad, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
-    if (ADC->board[i] == 9 || ADC->board[i] == 10 || ADC->board[i] == 11 || ADC->board[i] == 12)
+    if (SiADC->board[i] == 9 || SiADC->board[i] == 10 || SiADC->board[i] == 11 || SiADC->board[i] == 12)
     {
-      int quad = (ADC->board[i]-9);
-      Gobbi->addDeltaEvent(quad, ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      int quad = (SiADC->board[i]-9);
+      Gobbi->addDeltaEvent(quad, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
-    if (ADC->board[i] == 13)
+    if (SiADC->board[i] == 13)
     {
-      WW->addFrontEvent(ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      WW->addFrontEvent(SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
-    if (ADC->board[i] == 14)
+    if (SiADC->board[i] == 14)
     {
-      WW->addBackEvent(ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      WW->addBackEvent(SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
-    if (ADC->board[i] == 15)
+    if (SiADC->board[i] == 15)
     {
-      WW->addDeltaEvent(ADC->chan[i], ADC->high[i], ADC->low[i], ADC->time[i]);
+      WW->addDeltaEvent(SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
   }
   //data is unpacked and stored into Silicon class at this point
+
+  int NE = 0; //index for the current energy position
+  for (int i=0; i<CsIADC->number; i++)
+  {
+    if (CsIADC->underflow[i]) continue;
+    if (CsIADC->overflow[i]) continue;
+    
+    //ADC.channel[i]
+    //int ienergy = ADC.data[i];
+    cout << "CsI " << CsIADC->channel[i] << " " << CsIADC->data[i] << endl;
+
+    Gobbi->DataE[NE].id = iCsi;
+    Gobbi->DataE[NE].ienergy = ienergy;
+    Gobbi->DataE[NE].energy = energy;
+    NE++;
+    Gobbi->NE = NE;
+  }
+
+  int NT = 0; //index for the current time position
+  for (int i=0; i<CsIADC->Ndata; i++)
+  {
+  
+    //ADC.channel[i]
+    //int ienergy = ADC.data[i];
+    cout << "TDC " << TDC->dataOut[i].channel << " " << TDC->dataOut[i].time << endl;
+
+    Gobbi->DataT[NE].id = TDC->dataOut[i].channel;
+    Gobbi->DataT[NE].itime = TDC->dataOut[i].time;
+    NT++;
+    Gobbi->NT = NT;
+  }
+
+  Gobbi->MatchCsIEnergyTime();
+
 
   //leave this part out early in the experiment, it causes a lot of troubles!!
   Gobbi->SiNeighbours();
