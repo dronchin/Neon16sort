@@ -13,6 +13,7 @@ struct dataE
   int id;
   int itime;
   float energy;
+  float time;
 };
 struct dataT
 {

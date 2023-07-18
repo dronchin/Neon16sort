@@ -125,22 +125,22 @@ void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high,
   Telescope[quad]->multDelta++;
 }
 
-void gobbi::addCsIEvent(int quad, unsigned short chan, unsigned short high, 
-                                  unsigned short low, unsigned short time)
-{
-  //TODO major TODO
-  //this part is going to need some testing and work. 
-  //I don't know and can't anticipate what it should look like
-  return
-}
-
-
-
 
 void gobbi::MatchCsIEnergyTime()
 {
   int Nfound = 0;
   int Nnotfound = 0;
+
+  //plot unmatched energy and times
+  for (int ie=0;ie<NE;ie++)
+  {
+    Histo->CsI_Energy_R_um[DataE[ie].id]->Fill(DataE[ie].ienergy);
+  }
+  for (int it=0;it<NT;it++)
+  {
+    Histo->CsI_Time_R_um[DataT[it].id]->Fill(DataT[ie].itime);
+  }
+
   // match up energies to times
   for (int ie=0;ie<NE;ie++)
   {
@@ -164,31 +164,31 @@ void gobbi::MatchCsIEnergyTime()
           int quad = 0;
           int chan = DataE[ie].id;
           //CsI energy calibration here!
-          DataE[ie].Energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
-          float time = CsITimecal->getTime(quad, chan, time);
+          DataE[ie].energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
+          DataE[ie].time = CsITimecal->getTime(quad, chan, time);
 
-          Telescope[quad]->CsI.Add(chan, DataE[ie].Energy, 0, DataE[ie].ienergy, time);
+          Telescope[quad]->CsI.Add(chan, DataE[ie].energy, 0, DataE[ie].ienergy, DataE[ie].time);
           Telescope[quad]->multCsI++;
-
-          //TODO add matched histo, should also add unmatched histos earlier
-          Histo->
-
-
         }
         if(id < 8 and id >= 4)
         {
           int quad = 1;
           int chan = DataE[ie].id - 4; //shift id so it is 0,1,2,3
           //CsI energy calibration here!
-          DataE[ie].Energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
+          DataE[ie].energy = CsIEcal->getEnergy(quad, chan, DataE[ie].ienergy);
           float time = CsITimecal->getTime(quad, chan, time);
 
-          Telescope[quad]->CsI.Add(chan, DataE[ie].Energy, 0, DataE[ie].ienergy, time);
+          Telescope[quad]->CsI.Add(chan, DataE[ie].energy, 0, DataE[ie].ienergy, time);
           Telescope[quad]->multCsI++;
         }
+
+        Histo->CsI_Energy_R[id]->Fill(DataE[ie].ienergy);
+        Histo->CsI_Energy_cal[id]->Fill(DataE[ie].energy);
+        Histo->CsI_Time_R[id]->Fill(DataE[ie].itime);
+        Histo->CsI_Time_cal[id]->Fill(DataE[ie].time);
+
       }
     }
-
   }
 }
 

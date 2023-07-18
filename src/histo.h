@@ -28,9 +28,10 @@ public:
   static const int dE_boardnum = 4;
   static const int boardnum = 16;
   static const int channum = 32; //number of channels on each board
+  static const int NCsI = 16; //Num of CsI channels 
 
+  //all for Gobbi array
   TDirectoryFile * dirSummary;
-
   TDirectory * dir1dFrontE_R;
   TDirectory * dir1dBackE_R;
   TDirectory * dir1dDeltaE_R;
@@ -47,6 +48,23 @@ public:
   TDirectory * dir1dBackTime_R;
   TDirectory * dir1dDeltaTime_R;
 
+  TDirectory * dir1dCsI_Energy;
+  TDirectory * dir1dCsI_Time;
+
+  //all for ww array
+  TDirectoryFile * dirWWSummary;
+  TDirectory * dir1dWWFront_R;
+  TDirectory * dir1dWWBack_R;
+  TDirectory * dir1dWWDelta_R;
+
+  TDirectory * dir1dWWFront_cal;
+  TDirectory * dir1dWWBack_cal;
+  TDirectory * dir1dWWDelta_cal;
+
+  TDirectory * dir1dWWFrontTime_R;
+  TDirectory * dir1dWWBackTime_R;
+  TDirectory * dir1dWWDeltaTime_R;
+
 
   TDirectoryFile * dirDEEplots; //!< directory for deltaE-E plots used in particle identificaiton
   TDirectoryFile * dirhitmaps; //!< directory for all particle type hitmaps
@@ -54,6 +72,8 @@ public:
   TDirectoryFile * dirInvMass; //!< directory for all correlations and inv-mass
   TDirectory * dir14O
 
+
+  //all Gobbi summaries
   TH2I * sumFrontE_R;
   TH2I * sumBackE_R;
   TH2I * sumDeltaE_R;
@@ -84,6 +104,13 @@ public:
   TH1I * DeltaElow_R[4][channum];
   TH1I * DeltaTime_R[4][channum];
   TH1I * DeltaE_cal[4][channum];
+
+  TH1I * CsI_Energy_R_um[NCsI];
+  TH1I * CsI_Energy_R[NCsI];
+  TH1I * CsI_Energy_cal[NCsI];
+  TH1I * CsI_Time_R_um[NCsI];
+  TH1I * CsI_Time_R[NCsI];
+  TH1I * CsI_Time_cal[NCsI];
 
   //DeltaE-E plots
   TH2I * DEE[4];

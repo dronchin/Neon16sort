@@ -7,7 +7,7 @@ histo::histo()
   file_read->cd();
 
   //create subdirectories to store arrays of spectra
-  dirSummary = new TDirectoryFile("Summary", "Summary"); //name, title
+  dirSummary = new TDirectoryFile("GobbiSum", "GobbiSum"); //name, title
   //make subdirectories
   //Energies and DeltaEnergies, Raw+Calibrated
   dir1dFrontE_R = dirSummary->mkdir("1dFrontE_R","1dFrontE_R");
@@ -22,12 +22,31 @@ histo::histo()
   dir1dBackE_cal = dirSummary->mkdir("1dBackE_cal","1dBackE_cal");
   dir1dDeltaE_cal = dirSummary->mkdir("1dDeltaE_cal","1dDeltaE_cal");
 
-  //TODO add in directory for CsI and W-0deg summaries
-
   //raw time summaries
   dir1dFrontTime_R = dirSummary->mkdir("1dFrontTime_R","1dFrontTime_R");
   dir1dBackTime_R = dirSummary->mkdir("1dBackTime_R","1dBackTime_R");
   dir1dDeltaTime_R = dirSummary->mkdir("1dDeltaTime_R","1dDeltaTime_R");
+
+  dir1dCsI_Energy = dirSummary->mkdir("1dCsI_Energy","1dCsI_Energy");
+  dir1dCsI_Time = dirSummary->mkdir("1dCsI_Time","1dCsI_Time");
+
+
+
+  //all the same plots for WW array
+  dirWWSummary = new TDirectoryFile("WWSum", "WWSum"); //name, title
+  //TODO add in directory for W-0deg summaries
+  dir1dWWFront_R = dirWWSummary->mkdir("1dWWFront_R","1dWWFront_R");
+  dir1dWWBack_R = dirWWSummary->mkdir("1dWWBack_R","1dWWBack_R");
+  dir1dWWDelta_R = dirWWSummary->mkdir("1dWWDelta_R","1dWWDelta_R");
+
+  dir1dWWFront_cal = dirWWSummary->mkdir("1dWWFront_cal","1dWWFront_cal");
+  dir1dWWBack_cal = dirWWSummary->mkdir("1dWWBack_cal","1dWWBack_cal");
+  dir1dWWDelta_cal = dirWWSummary->mkdir("1dWWDelta_cal","1dWWDelta_cal");
+
+  dir1dWWFrontTime_R = dirWWSummary->mkdir("1dWWFrontTime_R","1dWWFrontTime_R");
+  dir1dWWBackTime_R = dirWWSummary->mkdir("1dWWBackTime_R","1dWWBackTime_R");
+  dir1dWWDeltaTime_R = dirWWSummary->mkdir("1dWWDeltaTime_R","1dWWDeltaTime_R");
+
 
   //directory for DeltaE-E plots
   dirDEEplots = new TDirectoryFile("DEEplots","DEEplots");
@@ -48,6 +67,7 @@ histo::histo()
   int Nbin = 5000;
   float Ecal_Emax = 50.0;
   float Delta_Emax = 16.0;
+  float CsI_Emax = 30.0
 
   //defined in the header
   //E_boardnum = 8; dE_boardnum = 4; boardnum = 16; channum = 32;
@@ -68,6 +88,12 @@ histo::histo()
   sumDeltaE_cal = new TH2I("sumDeltaE_cal","",4*channum,0,4*channum,Nbin,0,Ecal_Emax);
   sumDeltaE_cal->SetOption("colz");
 
+  sumCsIE_R = new TH2I("sumCsIE_R","",16,0,16,1024,0,8192);
+  sumCsIE_R->SetOption("colz");
+  sumCsIE_cal = new TH2I("sumCsIE_cal","",16,0,16,Nbin,0,CsI_Emax);
+  sumCsIE_cal->SetOption("colz");
+
+
   //times
   sumFrontTime_R = new TH2I("sumFrontTime_R","",4*channum,0,4*channum,512,0,16383);
   sumFrontTime_R->SetOption("colz");
@@ -81,10 +107,29 @@ histo::histo()
   sumDeltaTime_R->SetOption("colz");
   sumDeltaTime_cal = new TH2I("sumDeltaTime_cal","",4*channum,0,4*channum,512,0,16383);
   sumDeltaTime_cal->SetOption("colz");
+  sumCsITime_R = new TH2I("sumCsITime_R","",16,0,16,512,0,16383);
+  sumCsITime_R->SetOption("colz");
+  sumCsITime_cal = new TH2I("sumCsITime_cal","",16,0,16,512,0,16383);
+  sumCsITime_cal->SetOption("colz");
+
+  dirWWSummary->cd();
+  sumWWFrontE_R = new TH2I("sumWWFrontE_R","",channum,0,channum,1024,0,8192);
+  sumWWFrontE_R->SetOption("colz");
+  sumWWBackE_R = new TH2I("sumWWBackE_R","",channum,0,channum,1024,0,8192);
+  sumWWBackE_R->SetOption("colz");
+  sumWWDeltaE_R = new TH2I("sumWWDeltaE_R","",channum,0,channum,1024,0,8192);
+  sumWWDeltaE_R->SetOption("colz");
+
+  sumWWFrontE_cal = new TH2I("sumFrontE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWFrontE_cal->SetOption("colz");
+  sumWWBackE_cal = new TH2I("sumBackE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWBackE_cal->SetOption("colz");
+  sumWWDeltaE_cal = new TH2I("sumDeltaE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWDeltaE_cal->SetOption("colz");
 
 
   ostringstream name;
-  //create all 1d Front spectra
+  //create all Silicon 1d Front spectra
   for (int board_i=0; board_i<E_boardnum/2; board_i++)
   {
     for (int chan_i=0; chan_i<channum; chan_i++)
@@ -153,6 +198,37 @@ histo::histo()
       DeltaE_cal[board_i][chan_i] = new TH1I(name.str().c_str(),"",Nbin,0,Delta_Emax);
     }
   }
+
+  //create all the CsI summary plots
+  for (int ichan=0; ichan<NCsI; ichan++)
+  {
+    dir1dCsI_Energy->cd();
+    name.str("");
+    name << "CsI_Energy_" << ichan << "R_unmatched";
+    CsI_Energy_R_um[ichan] = new TH1I(name.str().c_str(),"",1024,0,4095);
+
+    name.str("");
+    name << "CsI_Energy_" << ichan << "R_matched";
+    CsI_Energy_R[ichan] = new TH1I(name.str().c_str(),"",1024,0,4095);
+
+    name.str("");
+    name << "CsI_Energy_" << ichan << "cal";
+    CsI_Energy_cal[ichan] = new TH1I(name.str().c_str(),"",Nbin,0,CsI_Emax);
+
+    dir1dCsI_Time->cd();
+    name.str("");
+    name << "CsI_Time_" << ichan << "R_unmatched";
+    CsI_Time_R_um[ichan] = new TH1I(name.str().c_str(),"",1024,0,4095);
+
+    name.str("");
+    name << "CsI_Time_" << ichan << "R_matched";
+    CsI_Time_R[ichan] = new TH1I(name.str().c_str(),"",1024,0,4095);
+
+    name.str("");
+    name << "CsI_Time_" << ichan << "cal";
+    CsI_Time_cal[ichan] = new TH1I(name.str().c_str(),"",Nbin,0,CsI_Emax);
+  }
+
 
   //create all spectra based on quadrants
   dirDEEplots->cd();
