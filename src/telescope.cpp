@@ -29,12 +29,19 @@ telescope::~telescope()
 void telescope::init(int id0)
 {
   id = id0;
-  //-ND checked 5/12/2022 these distances are correct compared to the simulation
-  float const XcenterA[4] = {4.419,2.819,-4.419,-2.819};
-  float const YcenterA[4] = {2.819,-4.419,-2.819,4.419};
+  //-ND checked 7/13/2023 these distances are correct for a 2cmx2cm Gobbi hole
+  //    ______ Front view
+  //    |    |____                  
+  //    | 4  |    |              
+  //   _|____| 1  |
+  //  |    |_|____|
+  //  | 3  |    |
+  //  |____| 2  |
+  //       |____|
+  float const XcenterA[4] = {4.624,2.631,-4.624,-2.631};
+  float const YcenterA[4] = {2.631,-4.624,-2.631,4.624};
   Xcenter = XcenterA[id];
   Ycenter = YcenterA[id];
-
 
   ostringstream outstring;  
   outstring << "pid_quad" << id+1;
@@ -53,18 +60,18 @@ void telescope::SetTargetDistance(double dist, float thick)
 //********************************************************
 void telescope::reset()
 {
-  maxFront = 0.;
   multFront = 0;
-  maxBack = 0.;
   multBack = 0;
   multDelta = 0;
-  maxDelta = 0.;
+  multCsI = 0;
 
   Front.reset();
   Back.reset();
   Delta.reset();
+  CsI.reset();
 
-  for (int i=0; i<Nsolution; i++){ Solution[i].reset();}
+  //possible to loop to Nsolution (but safer to just loop over all possible solution)
+  for (int i=0; i<10; i++){ Solution[i].reset();}
 
   Nsolution = 0;
 }

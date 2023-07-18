@@ -1,8 +1,8 @@
-void readPIDzline(int quad)
+void readPIDzline(string fname)
 {
   int Nlines;
   ostringstream outstring;
-  outstring << "zline/pid_quad" << quad << ".zline";
+  outstring << "zline/" << fname << ".zline";
   string sname = outstring.str();
   cout << sname << endl;
   ifstream zlines(sname.c_str());

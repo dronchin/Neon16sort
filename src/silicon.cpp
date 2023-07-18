@@ -6,21 +6,38 @@ using namespace std;
 
 //**********************************************************
   //constructor
-silicon::silicon(float thick0)
+silicon::silicon(histo * Histo1)
 {
-//  TargetThickness = thick0;
-  SiWidth = 6.45;
+  Histo = Histo1;
+
+  SiWidth = 4.95; //cm
+  //frame for a micron W 53.78 mm x 53.78 mm 
+  //with an active area of 49.50 mm x 49.50 mm. 
+
+  //WW is at 0-deg
+  Xcenter = 0.;
+  Ycenter = 0.;
+
+  id = 0;
+  ostringstream outstring;  
+  outstring << "WWpid";
+
+  Pid = new pid(outstring.str());
+
   //switch which loss file is used depending on the target.
   losses = new CLosses(6,"_CD2.loss");
 
-  FrontEcal = new calibrate(4, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
-  BackEcal = new calibrate(4, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
-  DeltaEcal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
+  FrontEcal = new calibrate(1, Histo->channum, "Cal/WWFrontEcal.dat", 1, true);
+  BackEcal = new calibrate(1, Histo->channum, "Cal/WWBackEcal.dat", 1, true);
+  DeltaEcal = new calibrate(1, Histo->channum, "Cal/WWDeltaEcal.dat", 1, true);
+
+  FrontTimecal = new calibrate(1, Histo->channum, "Cal/WWFrontTimecal.dat", 1, true);
+  BackTimecal = new calibrate(1, Histo->channum, "Cal/WWBackTimecal.dat", 1, true);
+  DeltaTimecal = new calibrate(1, Histo->channum, "Cal/WWDeltaTimecal.dat", 1, true);
 
   Ran = new TRandom();
 }
 
-//***********************************************************
 //destructor
 silicon::~silicon()
 {
@@ -29,48 +46,113 @@ silicon::~silicon()
   delete Pid;
 }
 
-//inialization
-void silicon::init(int id0)
+void silicon::SetTarget(double Targetdist, float thick)
 {
-  id = id0;
-  //-ND checked 5/12/2022 these distances are correct compared to the simulation
-  float const XcenterA[4] = {4.419,2.819,-4.419,-2.819};
-  float const YcenterA[4] = {2.819,-4.419,-2.819,4.419};
-  Xcenter = XcenterA[id];
-  Ycenter = YcenterA[id];
-
-
-  ostringstream outstring;  
-  outstring << "pid_quad" << id+1;
-
-  Pid = new pid(outstring.str());
-
+  for (int i=0;i<10;i++) Solution[i].SetTargetDistance(Targetdist);
+  TargetThickness = thick;
 }
 
-void silicon::SetTargetDistance(double dist)
-{
-  for (int i=0;i<10;i++) Solution[i].SetTargetDistance(dist);
-}
-
-
-//********************************************************
 void silicon::reset()
 {
-  maxFront = 0.;
   multFront = 0;
-  maxBack = 0.;
   multBack = 0;
   multDelta = 0;
-  maxDelta = 0.;
 
   Front.reset();
   Back.reset();
   Delta.reset();
 
-  for (int i=0; i<Nsolution; i++){ Solution[i].reset();}
+  for (int i=0; i<10; i++){ Solution[i].reset();}
 
   Nsolution = 0;
 }
+
+
+
+
+void silicon::addFrontEvent(unsigned short chan, unsigned short high, 
+                            unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in Telescope
+  float Energy = FrontEcal->getEnergy(0, chan, high);
+  float time = FrontTimecal->getTime(0, chan, time);
+
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumWWFrontE_R->Fill(chan, high);
+  Histo->sumWWFrontTime_R->Fill(chan, time);
+  Histo->sumWWFrontE_cal->Fill(chan, Energy);
+  Histo->sumWWFrontTime_cal->Fill(chan, time);
+
+  Histo->WWFrontE_R[chan]->Fill(high);
+  Histo->WWFrontElow_R[chan]->Fill(low);
+  Histo->WWFrontTime_R[chan]->Fill(time);
+  Histo->WWFrontE_cal[chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Front.Add(chan, Energy, low, high, time);
+  multFront++;
+}
+
+void silicon::addBackEvent(unsigned short chan, unsigned short high, 
+                           unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in Telescope
+  float Energy = BackEcal->getEnergy(0, chan, high);
+  float time = BackTimecal->getTime(0, chan, time);
+
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumWWBackE_R->Fill(chan, high);
+  Histo->sumWWBackTime_R->Fill(chan, time);
+  Histo->sumWWBackE_cal->Fill(chan, Energy);
+  Histo->sumWWBackTime_cal->Fill(time);
+
+  Histo->WWBackE_R[chan]->Fill(high);
+  Histo->WWBackElow_R[chan]->Fill(low);
+  Histo->WWBackTime_R[chan]->Fill(time);
+  Histo->WWBackE_cal[chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Back.Add(chan, Energy, low, high, time);
+  multBack++;
+}
+
+void silicon::addDeltaEvent(unsigned short chan, unsigned short high, 
+                            unsigned short low, unsigned short time)
+{
+  //Use calibration to get Energy and fill elist class in Telescope
+  float Energy = DeltaEcal->getEnergy(0, chan, high);
+  float time = DeltaTimecal->getTime(0, chan, time);
+
+  //good spot to fill in all of the summary and chan spectrums
+  Histo->sumWWDeltaE_R->Fill(chan, high);
+  Histo->sumWWDeltaTime_R->Fill(chan, time);
+  Histo->sumWWDeltaE_cal->Fill(chan, Energy);
+  Histo->sumWWDeltaTime_cal->Fill(chan, time);
+
+  Histo->WWDeltaE_R[chan]->Fill(high);
+  Histo->WWDeltaElow_R[chan]->Fill(low);
+  Histo->WWDeltaTime_R[chan]->Fill(time);
+  Histo->WWDeltaE_cal[chan]->Fill(Energy);      
+
+  //TODO this is a good spot to throw an if statement and make software thresholds
+  //if (Energy > .5)
+  Delta.Add(chan, Energy, low, high, time);
+  multDelta++;
+}
+
+void gobbi::SiNeigbours()
+{
+  //When a charged particle moves through Si, there is cross talk between neighbouring
+  //strips. Generally the signal is proportional to the total signal in the Si.
+  Front.Neighbours(id);
+  Back.Neighbours(id);
+  Delta.Neighbours(id);
+}
+
+
+
 
 //*********************************************************
   //????????
@@ -120,8 +202,6 @@ int silicon::simpleFront()
   Solution[0].timediff = timediff;
   //Solution[0].Nbefore = Front.Order[i].Nbefore;
   //Solution[0].Norder = Front.Order[i].Norder;
-
-
 
   //cout << "ifront " << Solution[0].ifront << "  strip " << Front.Order[0].strip << endl;
 

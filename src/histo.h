@@ -72,8 +72,12 @@ public:
   TDirectoryFile * dirInvMass; //!< directory for all correlations and inv-mass
   TDirectory * dir14O
 
+//  ^ directories
+/////////////////////////////////////////////////////////////////////////
+//  v summaries 
 
   //all Gobbi summaries
+  //Energies, Raw+Calibrated
   TH2I * sumFrontE_R;
   TH2I * sumBackE_R;
   TH2I * sumDeltaE_R;
@@ -82,13 +86,45 @@ public:
   TH2I * sumBackE_cal;
   TH2I * sumDeltaE_cal;
 
+  TH2I * sumCsIE_R;
+  TH2I * sumCsIE_cal;
+
+  //Gobbi times
   TH2I * sumFrontTime_R;
   TH2I * sumFrontTime_cal;
   TH2I * sumBackTime_R;
   TH2I * sumBackTime_cal;
   TH2I * sumDeltaTime_R;
   TH2I * sumDeltaTime_cal;
+  TH2I * sumCsITime_R;
+  TH2I * sumCsITime_cal;
 
+
+  //all WW summaries
+  //Energies, Raw+Calibrated
+  TH2I * sumWWFrontE_R;
+  TH2I * sumWWBackE_R;
+  TH2I * sumWWDeltaE_R;
+
+  TH2I * sumWWFrontE_cal;
+  TH2I * sumWWBackE_cal;
+  TH2I * sumWWDeltaE_cal;
+
+  //WW times
+  TH2I * sumWWFrontTime_R;
+  TH2I * sumWWFrontTime_cal;
+  TH2I * sumWWBackTime_R;
+  TH2I * sumWWBackTime_cal;
+  TH2I * sumWWDeltaTime_R;
+  TH2I * sumWWDeltaTime_cal;
+
+
+//  ^ summaries
+/////////////////////////////////////////////////////////////////////////
+//  v 1d spectra
+
+
+  //create all Gobbi 1d spectra
   //Energies  (quadrant, channum)
   TH1I * FrontE_R[4][channum];
   TH1I * FrontElow_R[4][channum];
@@ -104,13 +140,45 @@ public:
   TH1I * DeltaElow_R[4][channum];
   TH1I * DeltaTime_R[4][channum];
   TH1I * DeltaE_cal[4][channum];
-
+  //create all the CsI 1d spectra
   TH1I * CsI_Energy_R_um[NCsI];
   TH1I * CsI_Energy_R[NCsI];
   TH1I * CsI_Energy_cal[NCsI];
   TH1I * CsI_Time_R_um[NCsI];
   TH1I * CsI_Time_R[NCsI];
   TH1I * CsI_Time_cal[NCsI];
+
+
+
+
+  //create all WW 1d Front spectra
+  //Energies  ( channum)
+  TH1I * WWFrontE_R[channum];
+  TH1I * WWFrontElow_R[channum];
+  TH1I * WWFrontTime_R[channum];
+  TH1I * WWFrontE_cal[channum];
+
+  TH1I * WWBackE_R[channum];
+  TH1I * WWBackElow_R[channum];
+  TH1I * WWBackTime_R[channum];
+  TH1I * WWBackE_cal[channum];
+
+  TH1I * WWDeltaE_R[channum];
+  TH1I * WWDeltaElow_R[channum];
+  TH1I * WWDeltaTime_R[channum];
+  TH1I * WWDeltaE_cal[channum];
+
+
+
+
+
+
+
+
+
+
+
+
 
   //DeltaE-E plots
   TH2I * DEE[4];

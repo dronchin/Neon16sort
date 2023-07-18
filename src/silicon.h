@@ -27,21 +27,41 @@ struct lines
 class silicon
 {
  public:
-  silicon(float);
+
+  float TargetThickness;
+
+  silicon(histo * Histo1);
   ~silicon();
+  histo * Histo;
+  pid * Pid;
+  int id;
+  CLosses * losses;
+  calibrate * FrontEcal;
+  calibrate * BackEcal;
+  calibrate * DeltaEcal;
+  calibrate * FrontTimecal;
+  calibrate * BackTimecal;
+  calibrate * DeltaTimecal;
+
+  void SetTarget(double Targetdist, float thick);
   void reset();
-  void init(int);
+  void SiNeigbours();
+
+
+
+//I stopped here 7/17
+//need to add method to match events, steal these from gobbi.cpp
   void Reduce();
   int simpleFront();
   int multiHit();
-  void SetTargetDistance(double);
+
   int getPID();
   int calcEloss();
 
-  CLosses * losses;
-  float TargetThickness;
 
-  int id;
+
+
+
   float maxFront;
   float maxBack;
   float maxDelta;
@@ -59,7 +79,7 @@ class silicon
   solution Solution[10];
   int Nsolution;
 
-  pid * Pid;
+
 
   int simpleFrontBack();
   void position(int);

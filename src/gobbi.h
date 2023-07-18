@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include "histo.h"
-#include "silicon.h"
+#include "telescope.h"
 #include "calibrate.h"
 
 //two structures for matching up CsI times and Energies
@@ -25,13 +25,12 @@ struct dataT
 class Gobbi
 {
  public:
-  double Targetdist;
   float TargetThickness;
 
   Gobbi(histo * Histo1);
   ~Gobbi();
   histo * Histo;
-  silicon * Silicon[4];
+  telescope * Telescope[4];
 
   calibrate * FrontEcal;
   calibrate * BackEcal;

@@ -49,7 +49,7 @@ bool Det::unpack(unsigned short *point)
     cout << "Bad CsI" << endl;
     return stat;
   }
-  //TODO it is unclear, i think the TDC point is at the end after the CsI ADC????
+  //TODO it is unclear, I think the TDC point is at the end after the CsI ADC????
   stat = TDC->read(point); //unpack all the HINP chips
   if (!stat)
   {
@@ -137,7 +137,6 @@ bool Det::unpack(unsigned short *point)
   }
 
   Gobbi->MatchCsIEnergyTime();
-
 
   //leave this part out early in the experiment, it causes a lot of troubles!!
   Gobbi->SiNeighbours();
