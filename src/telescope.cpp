@@ -31,12 +31,12 @@ void telescope::init(int id0)
 {
   id = id0;
   //-ND checked 7/13/2023 these distances are correct for a 2cmx2cm Gobbi hole
-  //    ______ Front view
+  //    ______ Front view of Gobbi
   //    |    |____                  
   //    | 4  |    |              
-  //   _|____| 1  |
-  //  |    |_|____|
-  //  | 3  |    |
+  //   _|____| 1  |    __
+  //--|--->|_|____|-->|5 | WW behind
+  //  | 3  |    |     |__|
   //  |____| 2  |
   //       |____|
   float const XcenterA[5] = {4.624,2.631,-4.624,-2.631, 0};
@@ -86,9 +86,21 @@ void telescope::Reduce()
   multBack = Back.Reduce("B");
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 //***********************************************************
 // subroutine to identify a single particle from dE-E [Si-Si] data
-int telescope::SimpleSiSi()
+int telescope::SimpledEE()
 {
   int dstrip = abs(Front.Order[0].strip - Delta.Order[0].strip);
   if (dstrip > 3)
@@ -97,6 +109,7 @@ int telescope::SimpleSiSi()
     return 0;
   }
 
+  //this won't work until your calibrations are good.
   if (fabs(Front.Order[0].energy - Back.Order[0].energy) > 2.) 
   {
     Nsolution = 0;
@@ -104,14 +117,6 @@ int telescope::SimpleSiSi()
   }
 
   float timediff = Front.Order[0].time - Delta.Order[0].time;
-  //cout << "Front.Order[0].time " << Front.Order[0].time << " - Delta.Order[0].time " << Delta.Order[0].time << " = " << timediff << endl;
-  //if ( timediff < -500. || timediff > 100) 
-  //{
-  //  Nsolution = 0;
-  //  return 0;
-  //}
-
-
 
   Solution[0].energy = Front.Order[0].energy;
   Solution[0].energyR = Front.Order[0].energyR;
@@ -127,13 +132,349 @@ int telescope::SimpleSiSi()
   //Solution[0].Nbefore = Front.Order[i].Nbefore;
   //Solution[0].Norder = Front.Order[i].Norder;
 
+  Nsolution = 1;
+  return 1;
+}
+// same as above but for E-CsI events
+int telescope::SimpleECsI()
+{
+  //this needs some logic to double check, maybe something like checking if the CsI
+  //is behind the x-y potions of the E?
+  //if (Front.Order[0].strip <= 15 && Back.Order[0].strip <= 15 && CsI.Order[0].strip !=1)
+  //{
+  //  Nsolution = 0;
+  //  return 0;
+  //}
+  //else if (Front.Order[0].strip <= 15 && Back.Order[0].strip > 15 && CsI.Order[0].strip !=2)
+  //{
+  //  Nsolution = 0;
+  //  return 0;
+  //}
+  //else if (Front.Order[0].strip > 15 && Back.Order[0].strip <= 15 && CsI.Order[0].strip !=3)
+  //{
+  //  Nsolution = 0;
+  //  return 0;
+  //}
+  //else if (Front.Order[0].strip > 15 && Back.Order[0].strip > 15 && CsI.Order[0].strip !=4)
+  //{
+  //  Nsolution = 0;
+  //  return 0;
+  //}
 
+  //this won't work until your calibrations are good. but it should be turned on.
+  if (fabs(Front.Order[0].energy - Back.Order[0].energy) > 2.) 
+  {
+    Nsolution = 0;
+    return 0;
+  }
 
-  //cout << "ifront " << Solution[0].ifront << "  strip " << Front.Order[0].strip << endl;
+  float timediff = CsI.Order[0].time - Front.Order[0].time;
+
+  Solution[0].energy = CsI.Order[0].energy;
+  Solution[0].energyR = CsI.Order[0].energyR;
+  Solution[0].benergy = Back.Order[0].energy;
+  Solution[0].benergyR = Back.Order[0].energyR;
+  Solution[0].denergy = Front.Order[0].energy;
+  Solution[0].denergyR = Front.Order[0].energyR;
+  Solution[0].ifront = Front.Order[0].strip;
+  Solution[0].iback = Back.Order[0].strip;
+  Solution[0].ide = Delta.Order[0].strip;
+  Solution[0].itele = id; 
+  Solution[0].timediff = timediff;
+  //Solution[0].Nbefore = Front.Order[i].Nbefore;
+  //Solution[0].Norder = Front.Order[i].Norder;
 
   Nsolution = 1;
   return 1;
 }
+
+//****************************************************
+//recursive subroutine  used for multihit subroutine
+//this is a complicated subroutine and I forget how it works every time -ND
+void telescope::loop(int depth)
+{
+  if (depth == NestDim) //depth starts at 0
+  {
+    int dstrip = 0;
+    float de = 0.;
+    for (int i=0;i<NestDim;i++)
+    {
+      dstrip += abs(Delta.Order[NestArray[i]].strip
+            -Front.Order[i].strip);
+      de += abs(Back.Order[NestArray[i]].energy
+            -Front.Order[i].energy);
+    }
+
+    if (dstrip < dstripMin)
+    {
+      dstripMin = dstrip;
+      for (int i=0;i<NestDim;i++) {arrayD[i] = NestArray[i];}
+    }
+
+    if (de < deMin)
+    {
+      deMin = de;
+      for (int i=0;i<NestDim;i++) {arrayB[i] = NestArray[i];}
+    }
+    return;
+  }
+
+  //cout << "recurse " << zline[0].n << endl;
+  for (int i=0;i<NestDim;i++)
+  {
+    NestArray[depth] = i;
+    int leave = 0;
+    for (int j=0;j<depth;j++)
+    {
+      if (NestArray[j] == i)
+      {
+        leave =1;
+        break; 
+      }
+    }
+    if (leave) continue;
+    loop(depth+1);
+  }
+}
+
+
+//***************************************************
+//recursive subroutine  used for multihit subroutine
+void ringCounter::loop(int depth)
+{
+  if (depth == NestDim )
+  {
+    // do stuff here
+    int dstrip = 0;
+    float de = 0.;
+    for (int i=0;i<NestDim;i++)
+    {
+      pie_energy = Pie.Order[NestArray[i]].energy;
+      ring_energy = Ring.Order[i].energy;
+      de += abs(pie_energy-ring_energy);
+    }
+
+    if (dstrip < dstripMin)
+    {
+      dstripMin = dstrip;
+      for (int i=0;i<NestDim;i++) {arrayD[i] = NestArray[i];}
+    }
+
+    if (de < deMin)
+    {
+      deMin = de;
+      for (int i=0;i<NestDim;i++) {arrayB[i] = NestArray[i];}
+    }
+
+    return;
+  }
+
+
+  for (int i=0;i<NestDim;i++)
+  {
+    NestArray[depth] = i;
+    int leave = 0;
+    for (int j=0;j<depth;j++)
+    {
+      if (NestArray[j] == i)
+      {
+        leave =1;
+        break; 
+      } 
+    }
+
+    if (leave) continue;
+    loop(depth+1);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//***************************************************
+//extracts multiple particle from strip data 
+int telescope::multiHitdEE()
+{
+  int Ntries = min(Front.Nstore,Back.Nstore);
+  Ntries = min(Ntries,Delta.Nstore);
+
+  if (Ntries > 4)
+    Ntries = 4;
+  if (Ntries <= 0)
+    return 0;
+
+  Nsolution = 0;
+  for (NestDim = Ntries;NestDim>0;NestDim--)
+  {
+    dstripMin = 1000;
+    deMin = 10000.;
+    
+    //look for best solution
+    loop(0);
+    
+    //check to see if best possible solution is reasonable
+    int leave = 0;
+    for (int i=0;i<NestDim;i++)
+    {
+      if (abs(Delta.Order[arrayD[i]].strip - Front.Order[i].strip) > 2) 
+      {
+        leave = 1;
+        break;
+      }
+      if (fabs(Back.Order[arrayB[i]].energy - Front.Order[i].energy) > 2.) 
+      {
+        leave = 1;
+        break;
+      }
+      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
+    }
+      
+    if (leave) continue;
+    // now load solution
+    for (int i=0;i<NestDim;i++)
+    {
+      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
+      Solution[i].energy = Front.Order[i].energy;
+      Solution[i].energyR = Front.Order[i].energyR;
+      Solution[i].denergy = Delta.Order[arrayD[i]].energy;
+      Solution[i].ifront = Front.Order[i].strip;
+      Solution[i].iback = Back.Order[arrayB[i]].strip;
+      Solution[i].ide = Delta.Order[arrayD[i]].strip;
+      Solution[i].itele = id;
+      Solution[i].timediff = timediff;
+      //Solution[i].Nbefore = Front.Order[i].Nbefore;
+      //Solution[i].Norder = Front.Order[i].Norder;
+    }
+
+    Nsolution = NestDim;
+    
+    break;
+  }
+  return Nsolution;
+}
+
+
+
+//***************************************************
+//modification of multiHitdEE() to match E-CsI events
+int telescope::multiHitECsI()
+{
+  int Ntries = min(Front.Nstore,Back.Nstore);
+  Ntries = min(Ntries,CsI.Nstore);
+
+  if (Ntries > 4)
+    Ntries = 4;
+  if (Ntries <= 0)
+    return 0;
+
+  Nsolution = 0;
+  for (NestDim = Ntries;NestDim>0;NestDim--)
+  {
+    dstripMin = 1000;
+    deMin = 10000.;
+    
+    //look for best solution
+    loop(0);
+    
+    //check to see if best possible solution is reasonable
+    int leave = 0;
+    for (int i=0;i<NestDim;i++)
+    {
+      if (fabs(Back.Order[arrayB[i]].energy - Front.Order[i].energy) > 2.) 
+      {
+        leave = 1;
+        break;
+      }
+
+      //TODO
+      //something like this again but use the correct arrayB
+      //if (Front.Order[0].strip <= 15 && Back.Order[0].strip <= 15 && CsI.Order[0].strip !=1)
+      //{
+      //  leave = 1;
+      //  break;
+      //}
+      //else if (Front.Order[0].strip <= 15 && Back.Order[0].strip > 15 && CsI.Order[0].strip !=2)
+      //{
+      //  leave = 1;
+      //  break;
+      //}
+      //else if (Front.Order[0].strip > 15 && Back.Order[0].strip <= 15 && CsI.Order[0].strip !=3)
+      //{
+      //  leave = 1;
+      //  break;
+      //}
+      //else if (Front.Order[0].strip > 15 && Back.Order[0].strip > 15 && CsI.Order[0].strip !=4)
+      //{
+      //  leave = 1;
+      //  break;
+      //}
+
+      float timediff = CsI.Order[i].time - Front.Order[arrayD[i]].time;
+    }
+      
+    if (leave) continue;
+    // now load solution
+    for (int i=0;i<NestDim;i++)
+    {
+      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
+      Solution[i].energy = Front.Order[i].energy;
+      Solution[i].energyR = Front.Order[i].energyR;
+      Solution[i].denergy = Delta.Order[arrayD[i]].energy;
+      Solution[i].ifront = Front.Order[i].strip;
+      Solution[i].iback = Back.Order[arrayB[i]].strip;
+      Solution[i].ide = Delta.Order[arrayD[i]].strip;
+      Solution[i].itele = id;
+      Solution[i].timediff = timediff;
+      //Solution[i].Nbefore = Front.Order[i].Nbefore;
+      //Solution[i].Norder = Front.Order[i].Norder;
+    }
+
+    Nsolution = NestDim;
+    
+    break;
+  }
+  return Nsolution;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //*************************************
 //finds particle identification - checks to see if particle is inside of z - bananas  
@@ -196,126 +537,6 @@ int telescope::calcEloss()
 
 
 
-
-//****************************************************
-//recursive subroutine  used for multihit subroutine
-void telescope::loop(int depth)
-{
-  //cout << "depth=" << depth << " " << zline[0].n<< endl;
-  if (depth == NestDim) //depth starts at 0
-  {
-    int dstrip = 0;
-    float de = 0.;
-    for (int i=0;i<NestDim;i++)
-    {
-      dstrip += abs(Delta.Order[NestArray[i]].strip
-            -Front.Order[i].strip);
-      de += abs(Back.Order[NestArray[i]].energy
-            -Front.Order[i].energy);
-    }
-
-    //cout << " 1 " << zline[0].n << endl;
-
-    if (dstrip < dstripMin)
-    {
-      dstripMin = dstrip;
-      for (int i=0;i<NestDim;i++) {arrayD[i] = NestArray[i];}
-    }
-    //cout << " 2 " << zline[0].n << endl;
-
-    if (de < deMin)
-    {
-      deMin = de;
-      for (int i=0;i<NestDim;i++) {arrayB[i] = NestArray[i];}
-    }
-    //cout << "leave" << " " << zline[0].n << endl;
-    return;
-  }
-
-  //cout << "recurse " << zline[0].n << endl;
-  for (int i=0;i<NestDim;i++)
-  {
-    NestArray[depth] = i;
-    int leave = 0;
-    for (int j=0;j<depth;j++)
-    {
-      if (NestArray[j] == i)
-      {
-        leave =1;
-        break; 
-      }
-    }
-    if (leave) continue;
-    loop(depth+1);
-  }
-}
-
-//***************************************************
-//extracts multiple particle from strip data 
-int telescope::multiHit()
-{
-  int Ntries = min(Front.Nstore,Back.Nstore);
-  Ntries = min(Ntries,Delta.Nstore);
-
-  if (Ntries > 4)
-    Ntries = 4;
-  if (Ntries <= 0)
-    return 0;
-
-  Nsolution = 0;
-  for (NestDim = Ntries;NestDim>0;NestDim--)
-  {
-    dstripMin = 1000;
-    deMin = 10000.;
-    
-    //look for best solution
-    loop(0);
-    
-    //check to see if best possible solution is reasonable
-    int leave = 0;
-    for (int i=0;i<NestDim;i++)
-    {
-      if (abs(Delta.Order[arrayD[i]].strip - Front.Order[i].strip) > 2) 
-      {
-        leave = 1;
-        break;
-      }
-      if (fabs(Back.Order[arrayB[i]].energy - Front.Order[i].energy) > 2.) 
-      {
-        leave = 1;
-        break;
-      }
-      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
-      //if ( timediff < -500. || timediff > 100) 
-      //{
-      //  Nsolution = 0;
-      //  return 0;
-      //}
-    }
-      
-    if (leave) continue;
-    // now load solution
-    for (int i=0;i<NestDim;i++)
-    {
-      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
-      Solution[i].energy = Front.Order[i].energy;
-      Solution[i].energyR = Front.Order[i].energyR;
-      Solution[i].denergy = Delta.Order[arrayD[i]].energy;
-      Solution[i].ifront = Front.Order[i].strip;
-      Solution[i].iback = Back.Order[arrayB[i]].strip;
-      Solution[i].ide = Delta.Order[arrayD[i]].strip;
-      Solution[i].itele = id;
-      Solution[i].timediff = timediff;
-      //Solution[i].Nbefore = Front.Order[i].Nbefore;
-      //Solution[i].Norder = Front.Order[i].Norder;
-    }
-
-    Nsolution = NestDim;
-    
-    break;
-  }
-  return Nsolution;
-}
 
 
 

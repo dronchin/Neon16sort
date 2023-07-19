@@ -46,12 +46,7 @@ bool Det::unpack(unsigned short *point)
     return stat;
   }
   //TODO it is unclear, I think the TDC point is at the end after the CsI ADC????
-  stat = TDC->read(point); //unpack all the HINP chips
-  if (!stat)
-  {
-    cout << "Bad TDC" << endl;
-    return stat;
-  }
+  unsigned short* endpoint = TDC->read(point); //unpack all the HINP chips
 
 
   for (int i=0; i<SiADC->NstripsRead; i++)

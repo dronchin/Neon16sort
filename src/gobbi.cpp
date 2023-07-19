@@ -215,7 +215,7 @@ int gobbi::matchTele()
   multidEE = 0;
   multiECsI = 0;
   int Nmatch = 0;
-  for (int id=0;id<4;id++) 
+  for (int id=0;id<5;id++) 
   {
     //If there is any CsI info, use E-CsI hit scheme
     if (Telescope[id]->CsI.Nstore >= 1)
@@ -234,18 +234,14 @@ int gobbi::matchTele()
         multiECsI += Nmatch;
       }
     }
-
-
-
-
     //Need to be careful with puch-through events here
-    //otherwise could cause a lot of noise in Si-Si DEE plot 
+    //otherwise could cause a lot of noise in Si-Si dEE plot 
     else if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
     {
       //save comp time if the event is obvious
       if (Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1 && Telescope[id]->Delta.Nstore ==1)
       {
-        Nmatch = Telescope[id]->simpleFront();
+        Nmatch = Telescope[id]->simpledEE();
         NsimpleSiSi += Nmatch;
         multiSiSi += Nmatch;
       }
