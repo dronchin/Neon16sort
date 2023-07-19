@@ -115,6 +115,8 @@ bool Det::unpack(unsigned short *point)
     //int ienergy = ADC.data[i];
     cout << "CsI " << CsIADC->channel[i] << " " << CsIADC->data[i] << endl;
 
+    //TODO this dosen't make sense. Need to map chan to CsI 0-15
+    //CsIADC->dataOut[i].ienergy
     Gobbi->DataE[NE].id = iCsi;
     Gobbi->DataE[NE].ienergy = ienergy;
     Gobbi->DataE[NE].energy = energy;
@@ -123,7 +125,7 @@ bool Det::unpack(unsigned short *point)
   }
 
   int NT = 0; //index for the current time position
-  for (int i=0; i<CsIADC->Ndata; i++)
+  for (int i=0; i<TDC->Ndata; i++) //TODO check this loop
   {
   
     //ADC.channel[i]
@@ -158,9 +160,9 @@ bool Det::unpack(unsigned short *point)
       {
         Histo->protonhitmap->Fill(xpos, ypos);
       }
-      
     }
   }
+  //TODO add in WW position plot
 
   //transfer Solutions in Gobbi and WW to Correl
   Correl.reset();
@@ -190,19 +192,19 @@ bool Det::unpack(unsigned short *point)
   if (goodMult >= 2)
   {
     //list all functions to look for correlations here
-    corr_14O()
+    corr_14O();
   }
 
   return true;
 }
 
 
-void Gobbi::corr_14O()
+void det::corr_14O()
 {
   // p+13N
   if(Correl.proton.mult == 1 && Correl.N13.mult == 1)
   {
-    float const Q14O = mass_alpha - (mass_p + mass_t);
+    float const Q14O = mass_14O - (mass_13N+mass_p);
     Correl.zeroMask();
     Correl.proton.mask[0]=1;
     Correl.N13.mask[0]=1;
