@@ -10,6 +10,7 @@ using namespace std;
 telescope::telescope()
 {
   SiWidth = 6.45;
+  WWidth = 4.95; //cm
   //switch which loss file is used depending on the target.
   losses = new CLosses(6,"_CD2.loss");
 
@@ -38,15 +39,16 @@ void telescope::init(int id0)
   //  | 3  |    |
   //  |____| 2  |
   //       |____|
-  float const XcenterA[4] = {4.624,2.631,-4.624,-2.631};
-  float const YcenterA[4] = {2.631,-4.624,-2.631,4.624};
+  float const XcenterA[5] = {4.624,2.631,-4.624,-2.631, 0};
+  float const YcenterA[5] = {2.631,-4.624,-2.631,4.624, 0};
   Xcenter = XcenterA[id];
   Ycenter = YcenterA[id];
 
   ostringstream outstring;  
   outstring << "pid_quad" << id+1;
-
-  Pid = new pid(outstring.str());
+  SiSiPid = new pid(outstring.str());
+  outstring << "pid_quad" << id+1 << "_CsI";
+  SiCsIPid = new pid(outstring.str());
 
 }
 

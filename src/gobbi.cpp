@@ -11,21 +11,20 @@ gobbi::gobbi(histo * Histo1)
 {
   Histo = Histo1;
 
-  for (int id=0;id<4;id++)
+  for (int id=0;id<5;id++)
   {
     Telescope[id] = new telescope();
     Telescope[id]->init(id); //tells Telescope what position it is in
   }
-
                         //Ntele, Nstrip, filename, polynomial order, weave strips?
-  FrontEcal = new calibrate(4, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
-  BackEcal = new calibrate(4, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
-  DeltaEcal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
+  FrontEcal = new calibrate(5, Histo->channum, "Cal/GobbiFrontEcal.dat", 1, true);
+  BackEcal = new calibrate(5, Histo->channum, "Cal/GobbiBackEcal.dat", 1, true);
+  DeltaEcal = new calibrate(5, Histo->channum, "Cal/GobbiDeltaEcal.dat", 1, true);
   CsIEcal = new calibrate(4, 4, "Cal/GobbiDeltaEcal.dat", 1, false);
 
-  FrontTimecal = new calibrate(4, Histo->channum, "Cal/GobbiFrontTimecal.dat",1, false);
-  BackTimecal = new calibrate(4, Histo->channum, "Cal/GobbiBackTimecal.dat",1, false);  
-  DeltaTimecal = new calibrate(4, Histo->channum, "Cal/GobbiDeltaTimecal.dat",1, false);
+  FrontTimecal = new calibrate(5, Histo->channum, "Cal/GobbiFrontTimecal.dat",1, false);
+  BackTimecal = new calibrate(5, Histo->channum, "Cal/GobbiBackTimecal.dat",1, false);  
+  DeltaTimecal = new calibrate(5, Histo->channum, "Cal/GobbiDeltaTimecal.dat",1, false);
   CsITimecal = new calibrate(4, 4, "Cal/GobbiDeltaTimecal.dat", 1, false);
 }
 
@@ -45,11 +44,13 @@ gobbi::~gobbi()
 void gobbi::SetTarget(double Targetdist, float TargetThickness)
 {
   for (int id=0;id<4;id++){ Telescope[id]->SetTarget(Targetdist, TargetThickness); }
+  //TODO what is additional distance to WW?
+  Telescope[5]->SetTarget(Targetdist+10, TargetThickness); 
 }
 void gobbi::reset()
 {
   //reset the Telescope class
-  for (int i=0;i<4;i++){ Telescope[i]->reset();}
+  for (int i=0;i<5;i++){ Telescope[i]->reset();}
   //make sure to reset the CsI here as well, whatever they end up looking like
 }
 
@@ -197,7 +198,7 @@ void gobbi::SiNeigbours()
 {
   //When a charged particle moves through Si, there is cross talk between neighbouring
   //strips. Generally the signal is proportional to the total signal in the Si.
-  for (int id=0;id<4;id++) 
+  for (int id=0;id<5;id++) 
   {
     Telescope[id]->Front.Neighbours(id);
     Telescope[id]->Back.Neighbours(id);
@@ -211,28 +212,32 @@ int gobbi::matchTele()
 
   //look at all the information/multiplicities and determine how to match up 
   //the information
-  multiSiSi = 0;
-  multiSiCsI = 0;
+  multidEE = 0;
+  multiECsI = 0;
   int Nmatch = 0;
   for (int id=0;id<4;id++) 
   {
-    //If there is any CsI info, use Si-CsI hit scheme
+    //If there is any CsI info, use E-CsI hit scheme
     if (Telescope[id]->CsI.Nstore >= 1)
     {
       //look for the simple case first
       if (Telescope[id]->CsI.Nstore == 1 && Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1)
       {
-        Nmatch = Telescope[id]->simpleSiCsI();
-        NsimpleSiCsI += Nmatch;
-        multiSiCsI += Nmatch;
+        Nmatch = Telescope[id]->simpleECsI();
+        NsimpleECsI += Nmatch; //increase total count
+        multiECsI += Nmatch;   //increase current count
       }
       else //then look at the multihit case
       {
-        Nmatch = Telescope[id]->multiHitSiSiCsI();
-        NmultiSiSiCsI += Nmatch;
-        multiSiSiCsI += Nmatch;
+        Nmatch = Telescope[id]->multiHitECsI();
+        NmultiECsI += Nmatch;
+        multiECsI += Nmatch;
       }
     }
+
+
+
+
     //Need to be careful with puch-through events here
     //otherwise could cause a lot of noise in Si-Si DEE plot 
     else if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
@@ -289,7 +294,7 @@ int gobbi::matchTele()
 
   //calculate and determine particle identification PID in the Telescope
   int Pidmulti = 0;
-  for (int id=0;id<4;id++) 
+  for (int id=0;id<5;id++) 
   {
     Pidmulti += Telescope[id]->getPID();
   }
