@@ -58,7 +58,6 @@ void solution::getMomentum()
   Mvect[0] = momentum*sin(theta)*cos(phi);
   Mvect[1] = momentum*sin(theta)*sin(phi);
   Mvect[2] = momentum*cos(theta);
-  
 
   //scale = 1 einstein, 0 for newton
   energyTot = Ekin*Kinematics.scale + mass;
