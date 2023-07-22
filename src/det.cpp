@@ -13,17 +13,28 @@ det::det(histo * Histo1)
 {
   Histo = Histo1;
 
-  //nice spot for some measurements
-  Targetdist = 23.95; //cm //distance from target to front of Gobbi
-  TargetThickness = 2.65;//mg/cm^2 for CD2 tar1
+  //nice spot for some measurements - Changed Targetdist and thickness to planned values
+  Targetdist = 10; //cm //distance from target to front of Gobbi
+  TargetThickness = 9.472;//mg/cm^2 for CD2 tar1
 
   Gobbi = new gobbi(Histo); //pass in histo pointer
   Gobbi->SetTarget(Targetdist, TargetThickness);
+
+  //TODO no idea if I'm creating this correctly
+  TDC = new TDC1190(3,20,128); //registers 3 hits, reference channel 33, 128 total channels
+  ADC = new caen();
+  SiADC = new HINP();
 }
 
 det::~det()
 {
+  cout << "start det destr" << endl;
+  delete TDC;
+  delete ADC;
+  delete SiADC; //added in these deletes, not sure they should be here?
+
   delete Gobbi;
+  cout << "end det destr" << endl;
 }
 
 bool Det::unpack(unsigned short *point)
@@ -127,12 +138,10 @@ bool Det::unpack(unsigned short *point)
 
   //this method is doing a lot here.
   //  1. matches up either E-CsI or dE-E events
-  //  2. 
-  Gobbi->matchTele()
+  //  2. plots dE-E plots, and determines PID
+  //  3. Does energy corrections for each telescope
+  Gobbi->analyze()
   
-  Gobbi->energy
-/////////////////////////////////////////////////////////////////////////////////////
-
 
   //hitmaps and other plots based on Pid
   for (int id=0;id<4;id++) 

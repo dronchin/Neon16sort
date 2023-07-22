@@ -44,8 +44,9 @@ gobbi::~gobbi()
 void gobbi::SetTarget(double Targetdist, float TargetThickness)
 {
   for (int id=0;id<4;id++){ Telescope[id]->SetTarget(Targetdist, TargetThickness); }
-  //TODO what is additional distance to WW?
-  Telescope[5]->SetTarget(Targetdist+10, TargetThickness); 
+  //TODO what is additional distance to WW? - WW is 20 cm from gobbi
+  // Shouldn't the 5th telecscope id be 4? Changed it from 5
+  Telescope[4]->SetTarget(Targetdist+20, TargetThickness); 
 }
 void gobbi::reset()
 {
@@ -206,7 +207,7 @@ void gobbi::SiNeigbours()
   }
 }
 
-int gobbi::matchTele()
+int gobbi::analyze()
 {
   //TODO fix all of this! need to match CsI info here
 
@@ -264,7 +265,7 @@ int gobbi::matchTele()
       Histo->xyhitmap->Fill(Telescope[id]->Solution[isol].Xpos, 
                             Telescope[id]->Solution[isol].Ypos);
 
-      bool isSiCsI = Telescope[id]->isSiCsI()
+      bool isSiCsI = Telescope[id]->Solution[isol].isSiCsI;
 
       //fill in dE-E plots to select particle type
       //TODO there is a different correction on the de when thick Si is dE, probably also required for E now

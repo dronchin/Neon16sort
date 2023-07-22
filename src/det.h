@@ -23,47 +23,18 @@ class Gobbi
   ~Gobbi();
 
   bool unpack(unsigned short *point);
-  //void ReadCalibration(string filename);
-  int match();
-
-  float getEnergy(int board, int chan, int Ehigh);
-
-  double ** slopes;
-  double ** intercepts;
-
-
   histo * Histo;
+
+
+private:
+
   HINP * SiADC;
   caen * CsIADC;
   TDC1190 * TDC;
-  calibrate * FrontEcal;
-  calibrate * BackEcal;
-  calibrate * DeltaEcal;
-  calibrate * FrontTimecal;
-  calibrate * BackTimecal;
-  calibrate * DeltaTimecal;
 
-  silicon *Silicon[4];
   correl2 Correl;
 
-  int counter = 0;
-  int counter2 = 0;
-
-  void corr_4He();
-  void corr_5He();
-  void corr_6He();
-  void corr_5Li();
-  void corr_6Li();
-  void corr_7Li();
-  void corr_6Be();
-  void corr_7Be();
-  void corr_8Be();
-  void corr_9B();
-
-  correl2 Correl_saved;
-  int passnum = 0;
-  solution * swapfrag;
-  solution * oldfrag;
+  void corr_14O();
 };
 
 

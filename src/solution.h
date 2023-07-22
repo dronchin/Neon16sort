@@ -40,8 +40,9 @@ class solution
   int ide;
   int itele;
   float timediff;
-  int Nbefore;
-  int Norder;
+  bool isSiCsI;
+  //int Nbefore;
+  //int Norder;
   
   //variables filled after getPID() from Silicon.cpp
   int ipid;

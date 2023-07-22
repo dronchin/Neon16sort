@@ -129,8 +129,7 @@ int telescope::SimpledEE()
   Solution[0].ide = Delta.Order[0].strip;
   Solution[0].itele = id; 
   Solution[0].timediff = timediff;
-  //Solution[0].Nbefore = Front.Order[i].Nbefore;
-  //Solution[0].Norder = Front.Order[i].Norder;
+  Solution[0].isSiCsI = false;
 
   Nsolution = 1;
   return 1;
@@ -176,13 +175,13 @@ int telescope::SimpleECsI()
   Solution[0].benergyR = Back.Order[0].energyR;
   Solution[0].denergy = Front.Order[0].energy;
   Solution[0].denergyR = Front.Order[0].energyR;
-  Solution[0].ifront = Front.Order[0].strip;
+  Solution[0].ifront = CsI.Order[0].strip; //don't know if i want to do this
   Solution[0].iback = Back.Order[0].strip;
-  Solution[0].ide = Delta.Order[0].strip;
+  Solution[0].ide = Front.Order[0].strip;
   Solution[0].itele = id; 
   Solution[0].timediff = timediff;
-  //Solution[0].Nbefore = Front.Order[i].Nbefore;
-  //Solution[0].Norder = Front.Order[i].Norder;
+  Solution[0].isSiCsI = true;
+  Solution[0].itele = id; 
 
   Nsolution = 1;
   return 1;
@@ -351,8 +350,7 @@ int telescope::multiHitdEE()
       Solution[i].ide = Delta.Order[arrayD[i]].strip;
       Solution[i].itele = id;
       Solution[i].timediff = timediff;
-      //Solution[i].Nbefore = Front.Order[i].Nbefore;
-      //Solution[i].Norder = Front.Order[i].Norder;
+      Solution[i].isSiCsI = false;
     }
 
     Nsolution = NestDim;
@@ -363,7 +361,7 @@ int telescope::multiHitdEE()
 }
 
 
-
+//TODO needs some work!
 //***************************************************
 //modification of multiHitdEE() to match E-CsI events
 int telescope::multiHitECsI()
@@ -417,25 +415,22 @@ int telescope::multiHitECsI()
       //  leave = 1;
       //  break;
       //}
-
-      float timediff = CsI.Order[i].time - Front.Order[arrayD[i]].time;
     }
       
     if (leave) continue;
     // now load solution
     for (int i=0;i<NestDim;i++)
     {
-      float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
-      Solution[i].energy = Front.Order[i].energy;
-      Solution[i].energyR = Front.Order[i].energyR;
-      Solution[i].denergy = Delta.Order[arrayD[i]].energy;
-      Solution[i].ifront = Front.Order[i].strip;
+      float timediff = CsI.Order[i].time - Front.Order[arrayD[i]].time;
+      Solution[i].energy = CsI.Order[i].energy;
+      Solution[i].energyR = CsI.Order[i].energyR;
+      Solution[i].denergy = Front.Order[arrayD[i]].energy;
+      Solution[i].ifront = CsI.Order[i].strip;
       Solution[i].iback = Back.Order[arrayB[i]].strip;
-      Solution[i].ide = Delta.Order[arrayD[i]].strip;
+      Solution[i].ide = Front.Order[arrayD[i]].strip;
       Solution[i].itele = id;
       Solution[i].timediff = timediff;
-      //Solution[i].Nbefore = Front.Order[i].Nbefore;
-      //Solution[i].Norder = Front.Order[i].Norder;
+      Solution[i].isSiCsI = true;
     }
 
     Nsolution = NestDim;

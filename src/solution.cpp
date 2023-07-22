@@ -9,6 +9,7 @@ using namespace std;
 
 void solution::reset()
 {
+  //variables filled matching events in a telescope
   energy = -1;
   energyR = -1;
   benergy = -1;
@@ -19,14 +20,15 @@ void solution::reset()
   ide = -1;
   itele = -1;
   timediff = -100000.;
+  isSiCsI = false;
   
-  //variables filled after getPID() from Silicon.cpp
+  //variables filled after getPID() from telescope.cpp
   ipid = 0;
   iZ = 0;
   iA = 0;
   mass = 0;
   
-  //variables filled after position() and calcEloss() from Silicon.cpp
+  //variables filled after position() and calcEloss() from telescope.cpp
   Xpos = -1;
   Ypos = -1;
   theta = -1;
