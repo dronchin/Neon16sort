@@ -66,7 +66,7 @@ void elist::Remove(int entry)
   return;
 }
 
-void elist::Add(int StripNum, float energy, int rawenergy, int time)  //for use with tree
+void elist::Add(int StripNum, float energy, int rawenergy, int time)
 {
   Order[Nstore].energy = energy;
   Order[Nstore].strip = StripNum;

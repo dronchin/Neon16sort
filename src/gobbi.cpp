@@ -235,6 +235,14 @@ int gobbi::analyze()
         multiECsI += Nmatch;
       }
     }
+
+    //what happens to events that have a dE-E and a E-CsI in same telescope? 
+    //ideally we want to keep both. Right now we do either E-CsI or dE-E. Need
+    //someway to check if a solution was used already in E-CsI. Maybe we remove
+    //them from the elists once they are used in a solution. Then run them again
+    //through this second part.
+    
+
     //Need to be careful with puch-through events here
     //otherwise could cause a lot of noise in Si-Si dEE plot 
     else if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1)
@@ -248,7 +256,7 @@ int gobbi::analyze()
       }
       else //if higher multiplicity then worry about picking the right one
       {
-        Nmatch = Telescope[id]->multiHit();
+        Nmatch = Telescope[id]->multiHitdEE();
         NmultiSiSi += Nmatch;
         multiSiSi += Nmatch;
       }
@@ -298,7 +306,7 @@ int gobbi::analyze()
 
   //calc sumEnergy,then account for Eloss in target, then set Ekin and momentum of solutions
   //Eloss files are loaded in Telescope
-  for (int id=0;id<4;id++) 
+  for (int id=0;id<5;id++) 
   {
     Telescope[id]->calcEloss();
   }

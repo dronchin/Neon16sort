@@ -126,20 +126,20 @@ public:
 
   //create all Gobbi 1d spectra
   //Energies  (quadrant, channum)
-  TH1I * FrontE_R[4][channum];
-  TH1I * FrontElow_R[4][channum];
-  TH1I * FrontTime_R[4][channum];
-  TH1I * FrontE_cal[4][channum];
+  TH1I * FrontE_R[5][channum];
+  TH1I * FrontElow_R[5][channum];
+  TH1I * FrontTime_R[5][channum];
+  TH1I * FrontE_cal[5][channum];
 
-  TH1I * BackE_R[4][channum];
-  TH1I * BackElow_R[4][channum];
-  TH1I * BackTime_R[4][channum];
-  TH1I * BackE_cal[4][channum];
+  TH1I * BackE_R[5][channum];
+  TH1I * BackElow_R[5][channum];
+  TH1I * BackTime_R[5][channum];
+  TH1I * BackE_cal[5][channum];
 
-  TH1I * DeltaE_R[4][channum];
-  TH1I * DeltaElow_R[4][channum];
-  TH1I * DeltaTime_R[4][channum];
-  TH1I * DeltaE_cal[4][channum];
+  TH1I * DeltaE_R[5][channum];
+  TH1I * DeltaElow_R[5][channum];
+  TH1I * DeltaTime_R[5][channum];
+  TH1I * DeltaE_cal[5][channum];
   //create all the CsI 1d spectra
   TH1I * CsI_Energy_R_um[NCsI];
   TH1I * CsI_Energy_R[NCsI];
@@ -153,20 +153,6 @@ public:
 
   //create all WW 1d Front spectra
   //Energies  ( channum)
-  TH1I * WWFrontE_R[channum];
-  TH1I * WWFrontElow_R[channum];
-  TH1I * WWFrontTime_R[channum];
-  TH1I * WWFrontE_cal[channum];
-
-  TH1I * WWBackE_R[channum];
-  TH1I * WWBackElow_R[channum];
-  TH1I * WWBackTime_R[channum];
-  TH1I * WWBackE_cal[channum];
-
-  TH1I * WWDeltaE_R[channum];
-  TH1I * WWDeltaElow_R[channum];
-  TH1I * WWDeltaTime_R[channum];
-  TH1I * WWDeltaE_cal[channum];
 
 
 

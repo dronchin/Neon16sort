@@ -38,6 +38,7 @@ class solution
   int ifront;
   int iback;
   int ide;
+  int iCsI;
   int itele;
   float timediff;
   bool isSiCsI;

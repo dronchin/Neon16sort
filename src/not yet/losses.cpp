@@ -24,8 +24,8 @@ CLosses::CLosses(int Zmax0,string suffix)
     else if (iZ == 4)   filename = path + "Beryllium" + suffix;
     else if (iZ == 5)   filename = path + "Boron" + suffix;
     else if (iZ == 6)   filename = path + "Carbon" + suffix;
-    //else if (iZ == 7)   filename = path + "Nitrogen" + suffix;
-    //else if (iZ == 8)   filename = path + "Oxygen" + suffix;
+    else if (iZ == 7)   filename = path + "Nitrogen" + suffix;
+    else if (iZ == 8)   filename = path + "Oxygen" + suffix;
     //else if (iZ == 9)   filename = path + "Fluorine" + suffix;
     //else if (iZ == 10)  filename = path + "Neon" + suffix;
     else

@@ -18,6 +18,7 @@ void solution::reset()
   ifront = -1;
   iback = -1;
   ide = -1;
+  iCsI = -1;
   itele = -1;
   timediff = -100000.;
   isSiCsI = false;

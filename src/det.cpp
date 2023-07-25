@@ -95,15 +95,16 @@ bool Det::unpack(unsigned short *point)
     if (SiADC->board[i] == 13)
     {
       //all WW events are going into the 5th telescope of gobbi
-      Gobbi->addFrontEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      //The way that the motherboard is currently set up, the order is actually 13 - dE, 14 - WW Front, 15 - WW Back. Can change if Front, Back, dE order is preferable.
+      Gobbi->addDeltaEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
     if (SiADC->board[i] == 14)
     {
-      Gobbi->addBackEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      Gobbi->addFrontEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
     if (SiADC->board[i] == 15)
     {
-      Gobbi->addDeltaEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      Gobbi->addBackEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
   }
   //data is unpacked and stored into Silicon class at this point
@@ -146,18 +147,28 @@ bool Det::unpack(unsigned short *point)
   //hitmaps and other plots based on Pid
   for (int id=0;id<4;id++) 
   {
-    for (int isol=0; isol<Gobbi->Silicon[id]->Nsolution; isol++)
+    for (int isol=0; isol<Gobbi->Telescope[id]->Nsolution; isol++)
     {
-      float xpos = Gobbi->Silicon[id]->Solution[isol].Xpos;
-      float ypos = Gobbi->Silicon[id]->Solution[isol].Ypos;
+      float xpos = Gobbi->Telescope[id]->Solution[isol].Xpos;
+      float ypos = Gobbi->Telescope[id]->Solution[isol].Ypos;
       //protons
-      if (Gobbi->Silicon[id]->Solution[isol].iZ == 1 && Gobbi->Silicon[id]->Solution[isol].iA == 1)
+      if (Gobbi->Telescope[id]->Solution[isol].iZ == 1 && Gobbi->Telescope[id]->Solution[isol].iA == 1)
       {
         Histo->protonhitmap->Fill(xpos, ypos);
       }
     }
   }
   //TODO add in WW position plot
+  for (int isol=0; isol<Gobbi->Telescope[4]->Nsolution; isol++)
+  {
+    float xpos = Gobbi->Telescope[4]->Solution[isol].Xpos;
+    float ypos = Gobbi->Telescope[4]->Solution[isol].Ypos;
+      //protons
+      if (Gobbi->Telescope[4]->Solution[isol].iZ == 1 && Gobbi->Telescope[4]->Solution[isol].iA == 1)
+      {
+        Histo->protonhitmap->Fill(xpos, ypos);
+      }
+  }
 
   //transfer Solutions in Gobbi and WW to Correl
   Correl.reset();
@@ -169,7 +180,7 @@ bool Det::unpack(unsigned short *point)
       //only keep solutions that have a pid
       if(Gobbi->Telescope[id]->Solution[isol].ipid)
       {
-        Correl.load(&Gobbi->Silicon[id]->Solution[isol]);
+        Correl.load(&Gobbi->Telescope[id]->Solution[isol]);
         goodMult++;
       }
     }

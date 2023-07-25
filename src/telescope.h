@@ -84,8 +84,9 @@ class telescope
   int NestDim;
   void loop(int);
   int NestArray[50];
-  int arrayD[50];
-  int arrayB[50];
+  int arrayD[50]; //matches dE to E
+  int arrayB[50]; //matches Front to Back
+  int arrayC[50]; //matches CsI to front/back Pair
   float deMin;
   int dstripMin;
 
