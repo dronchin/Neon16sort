@@ -293,7 +293,7 @@ int telescope::multiHitdEE()
   if (Ntries <= 0)
     return 0;
 
-
+  Nsolution = 0;
   for (NestDim = Ntries;NestDim>0;NestDim--)
   {
     dstripMin = 1000;
@@ -324,19 +324,19 @@ int telescope::multiHitdEE()
     for (int i=0;i<NestDim;i++)
     {
       float timediff = Front.Order[i].time - Delta.Order[arrayD[i]].time;
-      Solution[Nsolution].energy = Front.Order[i].energy;
-      Solution[Nsolution].energyR = Front.Order[i].energyR;
-      Solution[Nsolution].denergy = Delta.Order[arrayD[i]].energy;
-      Solution[Nsolution].ifront = Front.Order[i].strip;
-      Solution[Nsolution].iback = Back.Order[arrayB[i]].strip;
-      Solution[Nsolution].ide = Delta.Order[arrayD[i]].strip;
-      Solution[Nsolution].iCsI = -1;
-      Solution[NSolution].itele = id;
-      Solution[Nsolution].timediff = timediff;
-      Solution[Nsolution].isSiCsI = false;
-      Nsolution++;
+      Solution[i].energy = Front.Order[i].energy;
+      Solution[i].energyR = Front.Order[i].energyR;
+      Solution[i].denergy = Delta.Order[arrayD[i]].energy;
+      Solution[i].ifront = Front.Order[i].strip;
+      Solution[i].iback = Back.Order[arrayB[i]].strip;
+      Solution[i].ide = Delta.Order[arrayD[i]].strip;
+      Solution[i].iCsI = -1;
+      Solution[i].itele = id;
+      Solution[i].timediff = timediff;
+      Solution[i].isSiCsI = false;
     }
 
+    Nsolution = NestDim;
     
     break;
   }
@@ -446,17 +446,23 @@ int telescope::multiHitECsI()
   //save some time and just exit if there are no Si Front/Back solutions
   if (NSiSolution == 0) return 0;
 
+
   //now assign each of these solutions a Csi detector location 
   int mult[4]={0};  //array for multipility of Si solution for each Csi
-  int sil[4][10];   //contains a lits of solutions for each Csi
+  int sil[4][10]; //contains a lits of solutions for each Csi
 
-  //look at all the Front/Back solutions and see how many are on each CsI
-  for (int i=0;i<NSiSolution;i++)
+//ERROR as written this won't work. There is nothing saved into the Solution class yet.
+//You should only save into the solution class at the very end when you have a full solution.
+//Here you will have to use Back.Order[arrayB[i]].strip and Front.Order[i].energy
+  for (int i=0;i<NSisolution;i++)
   {
-    int ifront = Front.Order[i].strip;
-    int iback = Back.Order[arrayB[i]].strip;
+    int ifront = Solution[i].ifront;
+    int iback = Solution[i].iback;
     for (int icsi=0;icsi<4;icsi++)
     {
+      //TODO we either need to make these arrays, or just hard code 4 if, else if statements
+      //these don't change for each telescope -ND
+      //see my suggestion below to get rid of these arrays.
       if (ifront >= FrontLow[icsi] &&
           ifront <= FrontHigh[icsi] &&
           iback  >= BackLow[icsi]  &&
@@ -464,20 +470,51 @@ int telescope::multiHitECsI()
       {
         sil[icsi][mult[icsi]] = i;
         mult[icsi]++;
+        Solution[i].iCsI = icsi;
         break;
       }
     }
+
+    //suggestion here
+      /*
+    //change loop variable from i -> isi
+    if (Front.Order[isi].strip <= 15 && Back.Order[arrayB[isi]].strip <= 15)
+    {
+      sil[0][mult[0]] = isi;
+      mult[0]++;
+    }
+    if (Front.Order[isi].strip <= 15 && Back.Order[arrayB[isi]].strip > 15)
+    {
+      sil[1][mult[1]] = isi;
+      mult[1]++;
+    }
+    if (Front.Order[isi].strip > 15 && Back.Order[arrayB[isi]].strip > 15)
+    {
+      sil[2][mult[2]] = isi;
+      mult[2]++;
+    }
+    if (Front.Order[isi].strip > 15 && Back.Order[arrayB[isi]].strip <= 15)
+    {
+      sil[3][mult[3]] = isi;
+      mult[3]++;
+    }
+      */
+
   }
 
   //make array of detect csi energies
   float energy[4]={-1.};
   float energyR[4]={-1.};
   short order[4]={-1};
-
+//  for (int i=0;i<Csi.mult;i++)
   //store the CsI raw energy info in an array that corresponds to the position it is in
-  for (int i=0;i<Csi.Nstore;i++)
+  for (int i=0;i<Csi.Nstore;i++) //i think Nstore is better then .mult -ND
   {
     energy[Csi.Order[i].strip] = Csi.Order[i].energy;
+    Csi.Order[i].energyCsI = Csi.Order[i].energyR; //what does this do?
+    //energyCsI currently is not a variable in the Order struct and I don't see the purpose
+    //for it to be there -ND
+    energyR[Csi.Order[i].strip] = Csi.Order[i].energyR;
     order[Csi.Order[i].strip] = i;
   }
 
@@ -486,35 +523,32 @@ int telescope::multiHitECsI()
   {
     //no solution for this location, ignore
     if (mult[icsi] == 0) continue;
-    //more than one si solution for a single Csi location ignore
-    else if (mult[icsi] > 1) continue;
-    // CsI energy < 0 should not happen
-    //but just in case ignore
-    else if(energy[icsi] <= 0.) continue;
-    
+    //more than one si solution for a single Csi location
+    else if (mult[icsi] > 1)
+    {
+        for (int j=0;j<mult[icsi];j++)
+        { 
+          //again, shouldn't be in solution class until the end -ND
+          Solution[sil[icsi][j]].ipid = 0; 
+        }
+        continue;
+    }
+    // only one si solution for this csi location
     else
     {
-
       int ii = sil[icsi][0];
-      Solution[NSolution].energy = Front.Order[ii].energy;
-      Solution[NSolution].energyR = Front.Order[ii].energyR;
-      Solution[NSolution].ifront = Front.Order[ii].strip;
-      Solution[NSolution].iback = Back.Order[arrayB[ii]].strip;
-      Solution[NSolution].iCsI = icsi;
-      Solution[NSolution].itele = id;
-      Solution[NSolution].isSiCsi = true;
-      Solution[Nsolution].CsIenergy = energy[icsi];
-      Solution[Nsolution].CsIenergyR = CsI.Order[order[icsi].energyR;
-      Solution[NSolution].denergy = 0.;
-      Solution[Nsolution].denergyR = 0.;
-      Solution[NSolution].CsItime = CsI.Order[order[iscsi]].time;
-      NSolutiuon++;
-    }
-  }
-  
-  return NSolution;
-}
-/*
+      //now see if this csi fired 
+      if (energy[icsi] <= 0.) 
+      {
+        //no csi recorded for this event
+        //stopped in silicon
+        Solution[ii].energy = 0.;
+        Solution[ii].iZ = 0;
+        continue;
+      }
+      
+      CsIhit = icsi + id*4;
+
 //ERROR PidECsI is only an array of 4 in here. By principle, a single telescope
 //should not load in all the calibration/PID info. Just the 4 it needs. -ND
 
@@ -581,10 +615,9 @@ int telescope::multiHitECsI()
       }
     }
   }
- */ 
+  
 
-
-//code from ND solution for mulithitECsI() could be how you find ECsI and dEE in same go
+//code from ND solution for mulithitECsI()
 /* 
   Nsolution = 0;
   while (CsI.Nstore > 0)
@@ -662,14 +695,8 @@ int telescope::multiHitECsI()
     Nsolution++;
   }
 */
-
-
-
-
-
-
-
-
+  return Nsolution;
+}
 
 
 //*************************************
@@ -687,7 +714,7 @@ int telescope::getPID()
 
     bool FoundPid = false;
     if (isSiCsI)
-      FoundPid = PidECsI[Solution[isol].iCsI]->getPID(CsIenergy, energy);
+      FoundPid = PidECsI->getPID(energy, denergy);
     else
       FoundPid = Pid->getPID(energy, denergy);
 
@@ -840,7 +867,6 @@ void telescope::positionC(int isol)
   Solution[isol].Ypos = Ypos;
   float theta = Solution[isol].angle();
 }
-*/
 
 //***********************************************************
 // load front and back strip delimeters for each CsI crystal.
@@ -877,33 +903,36 @@ void telescope::load(int F0low, int F1low,int F2low, int F3low,
 float telescope::light2energy(int Z, int A, int CsiHit, float energy)
 {
         
-  if(Z ==1)
-  { 
-    if(A ==2)
-      energy = calCsI_d->getEnergy(0,CsIhit,ebergy);
-    if(A ==3)
-      energy = calCsI_t->getEnergy(0,CsIhit,energy);
-  }
-  else if(Z == 2)
-  {
-    if(A ==3)
-      energy = calCsI_Alpha->getEnergy(0,CsIhit,energy);
-    else if(A ==4)
-      energy = calCsi_Alpha->getEnergy(0,CsIhit,energy);
-    else 
-    {
-      //cout << "found no calib for " << Z << " " << A << endl; 
-      return -1.;
-    }
-  }
-  else 
-  {
-    cout << "found no calib for Z= " << Z << " A= " << A << " id =  " << id << " Csi = " << CsIhit << endl; 
-    abort();
-  }
+        if(Z ==1)
+          { 
+            if(A ==2)
+            energy = calCsI_d->getEnergy(0,CsIhit,ebergy);;
+            if(A ==3)
+            energy = calCsI_t->getEnergy(0,CsIhit,energy);
+          }
+        else if(Z == 2)
+          {
+            if(A ==3)
+            energy = calCsI_Alpha->getEnergy(0,CsIhit,energy);
+            else if(A ==4)
+            energy = calCsi_Alpha->getEnergy(0,CsIhit,energy);
+            else 
+            {
+              //cout << "found no calib for " << Z << " " << A << endl; 
+              return -1.;
+            }
+          }
 
-  return energy;
+          else 
+            {
+              cout << "found no calib for Z= " << Z << " A= " << A << " id =  " << id << " Csi = " << CsIhit << endl; 
+              abort();
+            }
+
+          }
+
+     return energy;
 }
 //***********************************************************************
-
+*/
 

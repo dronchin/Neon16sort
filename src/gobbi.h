@@ -56,8 +56,8 @@ class Gobbi
   int multiSiSi;
   int multiSiSiCsI;
 
-  int NsimpleSiSiCsI = 0;
-  int NmultiSiSiCsI = 0;
+  int NsimpleECsI = 0;
+  int NmultiECsI = 0;
   int NsimpleSiSi = 0;
   int NmultiSiSi = 0;
 

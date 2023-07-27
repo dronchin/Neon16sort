@@ -114,33 +114,34 @@ histo::histo()
 
   //all WW summaries
   //Energies, Raw+Calibrated
+  //WW have 16 channels per side
   dirWWSummary->cd();
-  sumWWFrontE_R = new TH2I("sumWWFrontE_R","",channum,0,channum,1024,0,8192);
+  sumWWFrontE_R = new TH2I("sumWWFrontE_R","",16,0,16,1024,0,8192);
   sumWWFrontE_R->SetOption("colz");
-  sumWWBackE_R = new TH2I("sumWWBackE_R","",channum,0,channum,1024,0,8192);
+  sumWWBackE_R = new TH2I("sumWWBackE_R","",16,0,16,1024,0,8192);
   sumWWBackE_R->SetOption("colz");
-  sumWWDeltaE_R = new TH2I("sumWWDeltaE_R","",channum,0,channum,1024,0,8192);
+  sumWWDeltaE_R = new TH2I("sumWWDeltaE_R","",16,0,16,1024,0,8192);
   sumWWDeltaE_R->SetOption("colz");
 
-  sumWWFrontE_cal = new TH2I("sumWWFrontE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWFrontE_cal = new TH2I("sumWWFrontE_cal","",16,0,16,Nbin,0,Ecal_Emax);
   sumWWFrontE_cal->SetOption("colz");
-  sumWWBackE_cal = new TH2I("sumWWBackE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWBackE_cal = new TH2I("sumWWBackE_cal","",16,0,16,Nbin,0,Ecal_Emax);
   sumWWBackE_cal->SetOption("colz");
-  sumWWDeltaE_cal = new TH2I("sumWWDeltaE_cal","",channum,0,channum,Nbin,0,Ecal_Emax);
+  sumWWDeltaE_cal = new TH2I("sumWWDeltaE_cal","",16,0,16,Nbin,0,Ecal_Emax);
   sumWWDeltaE_cal->SetOption("colz");
 
   //WW times
-  sumWWFrontTime_R = new TH2I("sumWWFrontTime_R","",channum,0,channum,512,0,16383);
+  sumWWFrontTime_R = new TH2I("sumWWFrontTime_R","",16,0,16,512,0,16383);
   sumWWFrontTime_R->SetOption("colz");
-  sumWWFrontTime_cal = new TH2I("sumWWFrontTime_cal","",channum,0,channum,512,0,16383);
+  sumWWFrontTime_cal = new TH2I("sumWWFrontTime_cal","",16,0,16,512,0,16383);
   sumWWFrontTime_cal->SetOption("colz");
-  sumWWBackTime_R = new TH2I("sumWWBackTime_R","",channum,0,channum,512,0,16383);
+  sumWWBackTime_R = new TH2I("sumWWBackTime_R","",16,0,16,512,0,16383);
   sumWWBackTime_R->SetOption("colz");
-  sumWWBackTime_cal = new TH2I("sumWWBackTime_cal","",channum,0,channum,512,0,16383);
+  sumWWBackTime_cal = new TH2I("sumWWBackTime_cal","",16,0,16,512,0,16383);
   sumWWBackTime_cal->SetOption("colz");
-  sumWWDeltaTime_R = new TH2I("sumWWDeltaTime_R","",channum,0,channum,512,0,16383);
+  sumWWDeltaTime_R = new TH2I("sumWWDeltaTime_R","",16,0,16,512,0,16383);
   sumWWDeltaTime_R->SetOption("colz");
-  sumWWDeltaTime_cal = new TH2I("sumWWDeltaTime_cal","",channum,0,channum,512,0,16383);
+  sumWWDeltaTime_cal = new TH2I("sumWWDeltaTime_cal","",16,0,16,512,0,16383);
   sumWWDeltaTime_cal->SetOption("colz");
 
 
@@ -263,7 +264,7 @@ histo::histo()
 
 
   //create all WW 1d Front spectra
-  for (int chan_i=0; chan_i<channum; chan_i++)
+  for (int chan_i=0; chan_i<16; chan_i++)
   {
     //individual Front Energy
     dir1dWWFrontE_R->cd();
@@ -347,17 +348,31 @@ histo::histo()
 
 
 
-  //create all spectra based on quadrants
+  //create all spectra based on telescopes
   dirDEEplots->cd();
-  for (int quad=0; quad<4; quad++)
+  for (int tele=0; tele<5; tele++)
   {
     name.str("");
-    name << "DEE" << quad;
-    DEE[quad] = new TH2I(name.str().c_str(),"",500,0,80,800,0,22); //E is x, DE is y
+    name << "DEE" << tele;
+    float Emax = 80; //Defines likely max energy loss in gobbi dE-E and bins
+    int Ebins = 500;
+    float dEmax = 22
+    float dEbins = 800;
+    
+    if (tele == 4)
+    {
+      Emax = 160; //Redefines max energy loss and bins for heavy fragment in WW
+      Ebins = 1000;
+      dEmax = 100;
+      dEbins = 1600;
+    }
 
+    DEE[tele] = new TH2I(name.str().c_str(),"",Ebins,0,Emax,dEbins,0,dEmax); //E is x, DE is y
+ 
+     
     name.str("");
-    name << "timediff" << quad;   
-    timediff[quad] = new TH1I(name.str().c_str(),"",1000,-2000,2000);
+    name << "timediff" << tele;   
+    timediff[tele] = new TH1I(name.str().c_str(),"",1000,-2000,2000);
   }
 
 

@@ -12,8 +12,6 @@
 #include "solution.h"
 #include "pid.h"
 #include "losses.h"
-#include "calibrate.h"
-
 using namespace std;
 
 /*
@@ -40,8 +38,6 @@ class telescope
   int SimpleECsI();
   int multiHitdEE(); //+loop is private
   int multiHitECsI(); //+loop is private
-  void load(int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int);
-  float light2energy(int,int,int,float);
 
   int getPID();
   int calcEloss();
@@ -72,18 +68,12 @@ class telescope
   int Nsolution;
 
   pid * Pid;
-  pid * PidECsI[4];
+  pid * PidECsI;
 
   int simpleFrontBack();
   void position(int);
 
  private:
-  calibrate* calCsI_Alpha;
-  calibrate* calCsI_d;
-  calibrate* calCsI_t;
-  calibrate* calCsI_3He;
-
-
   int FrontLow[4];
   int FrontHigh[4];
   int BackLow[4];
@@ -104,5 +94,6 @@ class telescope
   int arrayB[50]; //matches Front to Back
   float deMin;
   int dstripMin;
+
 };
 #endif

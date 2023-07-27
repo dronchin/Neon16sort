@@ -95,16 +95,16 @@ bool Det::unpack(unsigned short *point)
     if (SiADC->board[i] == 13)
     {
       //all WW events are going into the 5th telescope of gobbi
-      //The way that the motherboard is currently set up, the order is actually 13 - dE, 14 - WW Front, 15 - WW Back. Can change if Front, Back, dE order is preferable.
-      Gobbi->addDeltaEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      //The order has been changed back to 13: W E Front, 14: W E Back, 15: W dE, I felt that it was more intuitive and it will stay like this.
+      Gobbi->addFrontEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
     if (SiADC->board[i] == 14)
     {
-      Gobbi->addFrontEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      Gobbi->addBackEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
     if (SiADC->board[i] == 15)
     {
-      Gobbi->addBackEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
+      Gobbi->addDeltaEvent(4, SiADC->chan[i], SiADC->high[i], SiADC->low[i], SiADC->time[i]);
     }
   }
   //data is unpacked and stored into Silicon class at this point
@@ -217,4 +217,25 @@ void det::corr_14O()
     Histo->VCM_14O_p13N->Fill(Correl.velocityCM);
     Histo->Erel_p13N_costhetaH->Fill(Erel_14O,Correl.cos_thetaH);
   }
+
+  //15O
+  if (Correl.O15.mult == 1)
+  {
+    float const Q14O = mass_14O + mass_9Be - (mass_15O+mass_9Be);
+    Correl.zeroMask();
+    Correl.NO.mask[0]=1;
+    Correl.makeArray(1);
+
+    float Erel_14O = Correl.findErel();
+    float thetaCM = Correl.thetaCM;
+    float Ex = Erel_14O - Q14O;
+
+    Histo->Erel_14O_15O->Fill(Erel_14O);
+    Histo->Ex_14O_15O->Fill(Ex);
+    Histo->ThetaCM_14O_15O->Fill(thetaCM*180./acos(-1));
+    Histo->VCM_14O_15O->Fill(Correl.velocityCM);
+    Histo->Erel_15O_costhetaH->Fill(Erel_14O,Correl.cos_thetaH);
+  }
+
+  //1 proton pickup to get 15F -> p + 14O?
 }

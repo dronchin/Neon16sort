@@ -255,9 +255,8 @@ int gobbi::analyze()
   int Nmatch = 0;
   for (int id=0;id<5;id++) 
   {
-    Telescope[id].Nsolution = 0;
     //If there is any CsI info, use E-CsI hit scheme
-    if (id < 4 && Telescope[id]->CsI.Nstore >= 1)
+    if (Telescope[id]->CsI.Nstore >= 1)
     {
       //look for the simple case first
       if (Telescope[id]->CsI.Nstore == 1 && Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1)
@@ -273,9 +272,11 @@ int gobbi::analyze()
         multiECsI += Nmatch;
       }
     }
+    
     //Need to be careful with puch-through events here
     //otherwise could cause a lot of noise in Si-Si dEE plot
-    //warning, events that have a ECsI and a dEE in the same telescope are not saved here.
+    //We want events that have at least a Delta-Front-Back but no CsI info (CsI info was taken
+    //out in simpleECsI() and multiHitECsI() if it did not match)
     if (Telescope[id]->Front.Nstore >=1 && Telescope[id]->Back.Nstore >=1 && Telescope[id]->Delta.Nstore >=1 && Telescope[id]->CsI.Nstore < 1)
     {
       //save comp time if the event is obvious

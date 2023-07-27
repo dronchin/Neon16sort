@@ -35,9 +35,6 @@ class solution
   float benergyR;
   float denergy;
   float denergyR;
-  float CsIenergy;
-  float CsIenergyR;
-  float CsItime;
   int ifront;
   int iback;
   int ide;

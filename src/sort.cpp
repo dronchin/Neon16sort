@@ -196,13 +196,17 @@ int main()
 
   //TODO change these to match what your scalers actually end up being.
   //when this is done, also change scalerNames.dat
-  //cout << "Front Nstore " << det.counter2 << endl;
-  //cout << "Front neighbours " << det.counter << endl;
-  //cout << "physics Event Counters = " << NphysicsEvent << endl;
-  //cout << "scaler buffers = " << NscalerBuffer << endl;
-  //cout << "confirm number of scalers = " << Nscalercounter << endl;
-  //cout << "Numbers of pauses = " << Npauses << endl;
-  //cout << "Number of resumes = " << Nresumes << endl;
+  cout << "Gobbi event type counters" << endl
+  cout << "  NsimpleECsI " << det.Gobbi->NsimpleECsI << endl;
+  cout << "  NmultiECsI " << det.Gobbi->NmultiECsI << endl;
+  cout << "  NsimpleSiSi " << det.Gobbi->NsimpleSiSi << endl;
+  cout << "  NmultiSiSi " << det.Gobbi->NmultiSiSi << endl;
+
+  cout << "physics Event Counters = " << NphysicsEvent << endl;
+  cout << "scaler buffers = " << NscalerBuffer << endl;
+  cout << "confirm number of scalers = " << Nscalercounter << endl;
+  cout << "Numbers of pauses = " << Npauses << endl;
+  cout << "Number of resumes = " << Nresumes << endl;
 
   ScalerBuffer.print();
 
