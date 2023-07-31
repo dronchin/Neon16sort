@@ -3,7 +3,11 @@
 using namespace std;
 
 //unpacking the XLM with ADC on the CHIP BOARDS (HINP 4)
-
+//constructor sets multiplicities to 0
+HINP::HINP()
+{
+  NstripsRead = 0;
+}
 
 /* Example in the buffer
 13 1ff3 10 0 8 0 0 0 0 28 412 ee 38b1 6b 30f d5 3815 0 a2 d
