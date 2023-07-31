@@ -11,7 +11,6 @@
 #include "TFile.h"
 #include "TGraph.h"
 
-
 using namespace std;
 
 class histo
@@ -52,18 +51,29 @@ public:
   TDirectory * dir1dCsI_Energy;
   TDirectory * dir1dCsI_Time;
 
+  //all for ww array
+  TDirectoryFile * dirWWSummary;
+  TDirectory * dir1dWWFront_R;
+  TDirectory * dir1dWWBack_R;
+  TDirectory * dir1dWWDelta_R;
+
+  TDirectory * dir1dWWFront_cal;
+  TDirectory * dir1dWWBack_cal;
+  TDirectory * dir1dWWDelta_cal;
+
+  TDirectory * dir1dWWFrontTime_R;
+  TDirectory * dir1dWWBackTime_R;
+  TDirectory * dir1dWWDeltaTime_R;
+
 
   TDirectoryFile * dirDEEplots; //!< directory for deltaE-E plots used in particle identificaiton
   TDirectoryFile * dirhitmaps; //!< directory for all particle type hitmaps
 
   TDirectoryFile * dirInvMass; //!< directory for all correlations and inv-mass
   TDirectory * dir14O;
-  TDirectory * dir15F;
 
 //  ^ directories
-//_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-//___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-//_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+/////////////////////////////////////////////////////////////////////////
 //  v summaries 
 
   //all Gobbi summaries
@@ -89,10 +99,28 @@ public:
   TH2I * sumCsITime_R;
   TH2I * sumCsITime_cal;
 
+
+  //all WW summaries
+  //Energies, Raw+Calibrated
+  TH2I * sumWWFrontE_R;
+  TH2I * sumWWBackE_R;
+  TH2I * sumWWDeltaE_R;
+
+  TH2I * sumWWFrontE_cal;
+  TH2I * sumWWBackE_cal;
+  TH2I * sumWWDeltaE_cal;
+
+  //WW times
+  TH2I * sumWWFrontTime_R;
+  TH2I * sumWWFrontTime_cal;
+  TH2I * sumWWBackTime_R;
+  TH2I * sumWWBackTime_cal;
+  TH2I * sumWWDeltaTime_R;
+  TH2I * sumWWDeltaTime_cal;
+
+
 //  ^ summaries
-//_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-//___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-//_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+/////////////////////////////////////////////////////////////////////////
 //  v 1d spectra
 
 
@@ -122,16 +150,28 @@ public:
 
 
 
-  //DeltaE-E plots
-  TH2I * DEE[5];
-  TH1I * timediff[5];
-  TH2I * DEE_CsI[4][4];
-  TH1I * timediff_CsI[4][4];
 
-  TH2I * testinghitmap;
+  //create all WW 1d Front spectra
+  //Energies  ( channum)
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //DeltaE-E plots
+  TH2I * DEE[4];
+  TH1I * timediff[4];
+
   TH2I * xyhitmap;
   TH2I * protonhitmap;
-  TH2I * oxygenhitmap;
 
   //correlations and inv-mass
   //O14
@@ -140,13 +180,6 @@ public:
   TH1I * ThetaCM_14O_p13N;
   TH1I * VCM_14O_p13N;
   TH2I * Erel_p13N_costhetaH;
-
-  //F15
-  TH1I * Erel_15F_p14O;
-  TH1I * Ex_15F_p14O;
-  TH1I * ThetaCM_15F_p14O;
-  TH1I * VCM_15F_p14O;
-  TH2I * Erel_p14O_costhetaH;
 
 };
 #endif

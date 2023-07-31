@@ -24,15 +24,52 @@ correl2::correl2()
   particle.push_back(&Li6);
   Li7.init(3,7);
   particle.push_back(&Li7);
-  Li8.init(3,8);
-  particle.push_back(&Li8);
-  Li9.init(3,9);
-  particle.push_back(&Li9);
 
   Be7.init(4,7);
   particle.push_back(&Be7);
   Be9.init(4,9);
   particle.push_back(&Be9);
+
+  parType B8;
+  B8.init(5,8);
+  particle.push_back(&B8);
+  parType B10;
+  B10.init(5,10);
+  particle.push_back(&B10);
+
+  parType C9;
+  C9.init(6,9);
+  particle.push_back(&C9);
+  parType C10;
+  C10.init(6,10);
+  particle.push_back(&C10);
+  parType C11;
+  C11.init(6,11);
+  particle.push_back(&C11);
+  parType C12;
+  C12.init(6,12);
+  particle.push_back(&C12);
+
+  parType N12;
+  N12.init(7,12);
+  particle.push_back(&N12);
+  parType N13;
+  N13.init(7,13);
+  particle.push_back(&N13);
+  parType N14;
+  N14.init(7,14);
+  particle.push_back(&N14);
+
+  parType O13;
+  O13.init(8,13);
+  particle.push_back(&O13);
+  parType O14;
+  O14.init(8,14);
+  particle.push_back(&O14);
+  parType O15;
+  O15.init(8,15);
+  particle.push_back(&O15);
+
 
   Nparticles = particle.size();
 }

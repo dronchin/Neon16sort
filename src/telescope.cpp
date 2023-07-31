@@ -5,7 +5,7 @@
 //      / ('        /|\                             .    * .    '  *
 //  (  /  |        / | \                                * .  ' .  . 
 //   \(_)_]]      /  |  \                            *   *  .   .
-                                                     '   *
+//                                                     '   *
 #include "telescope.h"
 
 using namespace std;
@@ -19,8 +19,20 @@ telescope::telescope()
   //switch which loss file is used depending on the target.
   Targlosses = new CLosses(8,"_Be.loss");
   PbSnlosses = new CLosses(8,"_PbSn.loss");
+  Silosses = new CLosses(8,"_Si.loss");
 
   Ran = new TRandom();
+
+  //CsI calibrations for clusters from proton calibrations
+  string name = "Cal/csi/deuteron.cal";
+  calCsi_d = new calibrate(1,16,name,1,false);
+  name = "Cal/csi/triton.cal";
+  calCsi_t = new calibrate(1,16,name,1,false);
+  //name = "Cal/csi/He3.cal";
+  //calCsi_3He = new calibrate(1,16,name,1);
+  name = "Cal/csi/alpha.cal";
+  calCsi_Alpha = new calibrate(1,16,name,1,false);
+
 }
 
 //destructor
@@ -59,22 +71,14 @@ void telescope::init(int id0)
   Pid = new pid(outstring.str());
 
   for (int i=0;i<4;i++)
-  outstring << "pid_quad" << id+1 << "_CsI"<<i;
-  PidECsI[i] = new pid(outstring.str());
-
-  //CsI calibrations for clusters from proton calibrations
-  string name = "Cal/csi/deuteron.cal";
-  calCsi_d = new calibrate(1,16,name,1);
-  name = "Cal/csi/triton.cal";
-  calCsi_t = new calibrate(1,16,name,1);
-  //name = "Cal/csi/He3.cal";
-  //calCsi_3He = new calibrate(1,16,name,1);
-  name = "Cal/csi/alpha.cal";
-  calCsi_Alpha = new calibrate(1,16,name,1);
+  {
+    outstring << "pid_quad" << id+1 << "_CsI"<< i+1;
+    PidECsI[i] = new pid(outstring.str());
+  }
 
 }
 
-void telescope::SetTargetDistance(double dist, float thick)
+void telescope::SetTarget(double dist, float thick)
 {
   for (int i=0;i<10;i++){ Solution[i].SetTargetDistance(dist); }
   TargetThickness = thick;
@@ -112,14 +116,39 @@ void telescope::Reduce()
 //'      `--'      `.-'      `--'      `--'      `--'      `-.'      `--'      `
 //Here are 5 subroutines that are called to figure out how to go from detector 
 //data to solutions that track a single particle.
+//  -testingHitE()
 //  -SimpledEE()
 //  -SimpleECsI()
 //  -multiHitdEE() + loop()
 //  -multiHitECsI() + loop()
 
+
+// subroutine to identify a position map from alpha calibrations 
+// it stores the answer in the last solution.
+int telescope::testingHitE()
+{
+  Solution[9].energy = Front.Order[0].energy;
+  Solution[9].energyR = Front.Order[0].energyR;
+  Solution[9].benergy = Back.Order[0].energy;
+  Solution[9].benergyR = Back.Order[0].energyR;
+  Solution[9].denergy = -1;
+  Solution[9].denergyR = -1;;
+  Solution[9].ifront = Front.Order[0].strip;
+  Solution[9].iback = Back.Order[0].strip;
+  Solution[9].ide = -1;
+  Solution[9].iCsI = -1;
+  Solution[9].itele = id;
+  Solution[9].timediff = -1000000.0;
+  Solution[9].isSiCsI = false;
+
+  Nsolution = 0; //don't determine there is any solutions.
+  return 0;
+}
+
+
 //***********************************************************
 // subroutine to identify a single particle from dE-E [Si-Si] data
-int telescope::SimpledEE()
+int telescope::simpledEE()
 {
   int dstrip = abs(Front.Order[0].strip - Delta.Order[0].strip);
   if (dstrip > 3)
@@ -155,33 +184,33 @@ int telescope::SimpledEE()
   return 1;
 }
 // same as above but for E-CsI events
-int telescope::SimpleECsI()
+int telescope::simpleECsI()
 {
   //here we check the CsI is behind the x-y potions of the E
   //if it doesn't match, it is removed so there is a chance it is a dE-E event
-  if (Front.Order[isi].strip <= 15 && Back.Order[arrayB[isi]].strip <= 15 && 
-      CsI.Order[icsi].strip !=0)
+  if (Front.Order[0].strip <= 15 && Back.Order[0].strip <= 15 && 
+      CsI.Order[0].strip !=0)
   {
     Nsolution = 0;
     CsI.Remove(0);
     return 0;
   }
-  else if (Front.Order[isi].strip <= 15 && Back.Order[arrayB[isi]].strip > 15 && 
-      CsI.Order[icsi].strip !=1)
+  else if (Front.Order[0].strip <= 15 && Back.Order[0].strip > 15 && 
+      CsI.Order[0].strip !=1)
   {
     Nsolution = 0;
     CsI.Remove(0);
     return 0;
   }
-  else if (Front.Order[isi].strip > 15 && Back.Order[arrayB[isi]].strip > 15 && 
-      CsI.Order[icsi].strip !=2)
+  else if (Front.Order[0].strip > 15 && Back.Order[0].strip > 15 && 
+      CsI.Order[0].strip !=2)
   {
     Nsolution = 0;
     CsI.Remove(0);
     return 0;
   }
-  else if (Front.Order[isi].strip > 15 && Back.Order[arrayB[isi]].strip <= 15 && 
-      CsI.Order[icsi].strip !=3)
+  else if (Front.Order[0].strip > 15 && Back.Order[0].strip <= 15 && 
+      CsI.Order[0].strip !=3)
   {
     Nsolution = 0;
     CsI.Remove(0);
@@ -331,7 +360,7 @@ int telescope::multiHitdEE()
       Solution[Nsolution].iback = Back.Order[arrayB[i]].strip;
       Solution[Nsolution].ide = Delta.Order[arrayD[i]].strip;
       Solution[Nsolution].iCsI = -1;
-      Solution[NSolution].itele = id;
+      Solution[Nsolution].itele = id;
       Solution[Nsolution].timediff = timediff;
       Solution[Nsolution].isSiCsI = false;
       Nsolution++;
@@ -420,7 +449,7 @@ int telescope::multiHitECsI()
   if (Ntries <= 0)
     return 0;
 
-  NSiSolution = 0;
+  NSisolution = 0;
   for (NestDim = Ntries;NestDim>0;NestDim--)
   {
     dstripMin = 1000;
@@ -441,17 +470,17 @@ int telescope::multiHitECsI()
       }
     }
     if (leave) continue;
-    NSiSolution = NestDim;
+    NSisolution = NestDim;
   }
   //save some time and just exit if there are no Si Front/Back solutions
-  if (NSiSolution == 0) return 0;
+  if (NSisolution == 0) return 0;
 
   //now assign each of these solutions a Csi detector location 
   int mult[4]={0};  //array for multipility of Si solution for each Csi
   int sil[4][10];   //contains a lits of solutions for each Csi
 
   //look at all the Front/Back solutions and see how many are on each CsI
-  for (int i=0;i<NSiSolution;i++)
+  for (int i=0;i<NSisolution;i++)
   {
     int ifront = Front.Order[i].strip;
     int iback = Back.Order[arrayB[i]].strip;
@@ -475,10 +504,10 @@ int telescope::multiHitECsI()
   short order[4]={-1};
 
   //store the CsI raw energy info in an array that corresponds to the position it is in
-  for (int i=0;i<Csi.Nstore;i++)
+  for (int i=0;i<CsI.Nstore;i++)
   {
-    energy[Csi.Order[i].strip] = Csi.Order[i].energy;
-    order[Csi.Order[i].strip] = i;
+    energy[CsI.Order[i].strip] = CsI.Order[i].energy;
+    order[CsI.Order[i].strip] = i;
   }
 
   //loop over csi location
@@ -494,25 +523,27 @@ int telescope::multiHitECsI()
     
     else
     {
-
       int ii = sil[icsi][0];
-      Solution[NSolution].energy = Front.Order[ii].energy;
-      Solution[NSolution].energyR = Front.Order[ii].energyR;
-      Solution[NSolution].ifront = Front.Order[ii].strip;
-      Solution[NSolution].iback = Back.Order[arrayB[ii]].strip;
-      Solution[NSolution].iCsI = icsi;
-      Solution[NSolution].itele = id;
-      Solution[NSolution].isSiCsi = true;
-      Solution[Nsolution].CsIenergy = energy[icsi];
-      Solution[Nsolution].CsIenergyR = CsI.Order[order[icsi].energyR;
-      Solution[NSolution].denergy = 0.;
-      Solution[Nsolution].denergyR = 0.;
-      Solution[NSolution].CsItime = CsI.Order[order[iscsi]].time;
-      NSolutiuon++;
+      Solution[Nsolution].energy = energy[icsi];
+      Solution[Nsolution].energyR = CsI.Order[order[icsi]].energyR;
+      Solution[Nsolution].denergy = Front.Order[ii].energy;
+      Solution[Nsolution].denergyR = Front.Order[ii].energyR;
+      Solution[Nsolution].benergy = Back.Order[arrayB[ii]].energy;
+      Solution[Nsolution].benergyR = Back.Order[arrayB[ii]].energy;
+
+      Solution[Nsolution].ifront = Front.Order[ii].strip;
+      Solution[Nsolution].iback = Back.Order[arrayB[ii]].strip;
+      Solution[Nsolution].ide = -1;
+      Solution[Nsolution].iCsI = icsi;
+      Solution[Nsolution].itele = id;
+      Solution[Nsolution].isSiCsI = true;
+      float timediff = CsI.Order[order[icsi]].time - Front.Order[ii].time;
+      Solution[Nsolution].timediff = timediff;
+      Nsolution++;
     }
   }
   
-  return NSolution;
+  return Nsolution;
 }
 /*
 //ERROR PidECsI is only an array of 4 in here. By principle, a single telescope
@@ -594,7 +625,7 @@ int telescope::multiHitECsI()
     //solutions matched will be stored by index in isimatched
     int NSimatches = 0;
     int isimatched = -1;
-    for (int isi = 0; isi<NSiSolution; isi++)
+    for (int isi = 0; isi<NSisolution; isi++)
     {
       //if the front back solution isn't in the correct CsI then it is not a solution
       //each rotation 
@@ -683,13 +714,22 @@ int telescope::getPID()
     bool isSiCsI = Solution[isol].isSiCsI;
 
     float energy = Solution[isol].energy;
+    float energyR = Solution[isol].energyR;
     float denergy = Solution[isol].denergy*cos(Solution[isol].theta);
 
     bool FoundPid = false;
     if (isSiCsI)
-      FoundPid = PidECsI[Solution[isol].iCsI]->getPID(CsIenergy, energy);
+    {
+      //use raw energy for CsI PID
+      FoundPid = PidECsI[Solution[isol].iCsI]->getPID(energyR, denergy);
+      Pid->Z = PidECsI[Solution[isol].iCsI]->Z;
+      Pid->A = PidECsI[Solution[isol].iCsI]->A;
+      Pid->mass = PidECsI[Solution[isol].iCsI]->mass;
+    }
     else
+    {
       FoundPid = Pid->getPID(energy, denergy);
+    }
 
     //no particle id is found
     if (!FoundPid) continue;
@@ -699,6 +739,13 @@ int telescope::getPID()
     Solution[isol].iZ = Pid->Z;
     Solution[isol].iA = Pid->A;
     Solution[isol].mass = Pid->mass*m0; //we want mass in energy units not AMU
+  
+    //take proton equivalent energies to light equivalent
+    if (isSiCsI)
+    {
+      int csid = Solution[isol].iCsI + 4*id;
+      Solution[isol].energy = light2energy(Pid->Z, Pid->A, csid, Solution[isol].energy);
+    }
   }
   return pidmulti;
 }
@@ -720,12 +767,19 @@ int telescope::calcEloss()
     float pc_before = sqrt(pow(sumEnergy+Solution[isol].mass,2) - pow(Solution[isol].mass,2));
     float velocity_before = pc_before/(sumEnergy+Solution[isol].mass);
 
-    //Double check this value
+    //Double check this value. seems kind of small.
     float PbSnThick = 5.06/cos(Solution[isol].theta); // mg/cm^2
     if (Solution[isol].itele == 4) 
     {
       sumEnergy = PbSnlosses->getEin(sumEnergy,PbSnThick,Solution[isol].iZ,Solution[isol].mass/m0);
     }  
+    
+    //need to account for energy loss in dE
+    float dEthick = 15.0865/cos(Solution[isol].theta); // Si 65 mm = 15.0865 mg/cm^2
+    if (Solution[isol].isSiCsI)
+    {
+      sumEnergy = Silosses->getEin(sumEnergy,dEthick,Solution[isol].iZ,Solution[isol].mass/m0);
+    }
     
     float thick = TargetThickness/2/cos(Solution[isol].theta);
    
@@ -777,20 +831,20 @@ void telescope::position(int isol)
           (((double)Solution[isol].iback+Ran->Rndm())/32.-0.5)*SiWidth;
   }
 
-  //TODO is this WW upside down? Will change this script
+  //WW pins go up in telescope, should be the same mapping as Gobbi telescope 1
   //The following is true if (0,0) is in the upper left hand
   // _ _ _ _
-  //|_|_|_|_| 5B0
+  //|_|_|_|_| 4B31
+  //|_|_|_|_|  ^
   //|_|_|_|_|  |
-  //|_|_|_|_|  v
-  //|_|_|_|_| 5B15
-  //5F0 -> 5F15
+  //|_|_|_|_| 4B16
+  //4F16 -> 5F31
   else if (id == 4)
   {
     Xpos = Xcenter + 
-          (((double)Solution[isol].ifront+Ran->Rndm())/16.-0.5)*WWidth;
+          (((double)Solution[isol].ifront+Ran->Rndm())/16.-0.5)*SiWidth;
     Ypos = Ycenter +
-          (0.5-((double)Solution[isol].iback+Ran->Rndm())/16.)*WWidth;
+          (((double)Solution[isol].iback+Ran->Rndm())/16.-0.5)*SiWidth;
   }
 
   //  Xpos += .3;
@@ -874,13 +928,13 @@ void telescope::load(int F0low, int F1low,int F2low, int F3low,
 //***************************************************
 // converstion of equilivant proton energy to energy for a given isotope
 //i.e. Z and A dependence of CsI light output
-float telescope::light2energy(int Z, int A, int CsiHit, float energy)
+float telescope::light2energy(int Z, int A, int CsIhit, float energy)
 {
-        
+  
   if(Z ==1)
   { 
     if(A ==2)
-      energy = calCsI_d->getEnergy(0,CsIhit,ebergy);
+      energy = calCsI_d->getEnergy(0,CsIhit,energy);
     if(A ==3)
       energy = calCsI_t->getEnergy(0,CsIhit,energy);
   }

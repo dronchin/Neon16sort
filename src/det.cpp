@@ -22,7 +22,7 @@ det::det(histo * Histo1)
 
   //TODO no idea if I'm creating this correctly
   TDC = new TDC1190(3,20,128); //registers 3 hits, reference channel 33, 128 total channels
-  ADC = new caen();
+  CsIADC = new caen();
   SiADC = new HINP();
 }
 
@@ -30,14 +30,14 @@ det::~det()
 {
   cout << "start det destr" << endl;
   delete TDC;
-  delete ADC;
+  delete CsIADC;
   delete SiADC; //added in these deletes, not sure they should be here?
 
   delete Gobbi;
   cout << "end det destr" << endl;
 }
 
-bool Det::unpack(unsigned short *point)
+bool det::unpack(unsigned short *point)
 {
   //reset the Detectors class
   Gobbi->reset();
@@ -50,7 +50,7 @@ bool Det::unpack(unsigned short *point)
     return stat;
   }
   //the point was passed by reference and is a continuuation of the spot in data stream
-  stat = CsIADC->unpackCsI(point); //unpack all the HINP chips
+  stat = CsIADC->read(point); //unpack all the HINP chips
   if (!stat)
   {
     cout << "Bad CsI" << endl;
@@ -141,9 +141,8 @@ bool Det::unpack(unsigned short *point)
   //  1. matches up either E-CsI or dE-E events
   //  2. plots dE-E plots, and determines PID
   //  3. Does energy corrections for each telescope
-  Gobbi->analyze()
+  Gobbi->analyze();
   
-
   //hitmaps and other plots based on Pid
   for (int id=0;id<4;id++) 
   {
@@ -158,15 +157,15 @@ bool Det::unpack(unsigned short *point)
       }
     }
   }
-  //TODO add in WW position plot
+  //Added in WW position plot, new hit map called oxygenhitmap
   for (int isol=0; isol<Gobbi->Telescope[4]->Nsolution; isol++)
   {
     float xpos = Gobbi->Telescope[4]->Solution[isol].Xpos;
     float ypos = Gobbi->Telescope[4]->Solution[isol].Ypos;
       //protons
-      if (Gobbi->Telescope[4]->Solution[isol].iZ == 1 && Gobbi->Telescope[4]->Solution[isol].iA == 1)
+      if (Gobbi->Telescope[4]->Solution[isol].iZ == 8 && Gobbi->Telescope[4]->Solution[isol].iA == 14)
       {
-        Histo->protonhitmap->Fill(xpos, ypos);
+        Histo->oxygenhitmap->Fill(xpos, ypos);
       }
   }
 
@@ -190,6 +189,8 @@ bool Det::unpack(unsigned short *point)
   {
     //list all functions to look for correlations here
     corr_14O();
+    corr_15O();
+    corr_15F();
   }
 
   return true;
@@ -198,7 +199,7 @@ bool Det::unpack(unsigned short *point)
 
 void det::corr_14O()
 {
-  // p+13N
+  //14O -> p+13N
   if(Correl.proton.mult == 1 && Correl.N13.mult == 1)
   {
     float const Q14O = mass_14O - (mass_13N+mass_p);
@@ -217,25 +218,52 @@ void det::corr_14O()
     Histo->VCM_14O_p13N->Fill(Correl.velocityCM);
     Histo->Erel_p13N_costhetaH->Fill(Erel_14O,Correl.cos_thetaH);
   }
-
-  //15O
+}
+/*
+void det::corr_15O()
+{
+  //15O - > There needs to be a decay channel you expect -ND
   if (Correl.O15.mult == 1)
   {
-    float const Q14O = mass_14O + mass_9Be - (mass_15O+mass_9Be);
+    //wut is this Qval? -ND
+    float const Q15O = mass_14O + mass_9Be - (mass_15O+mass_8Be);
     Correl.zeroMask();
     Correl.NO.mask[0]=1;
     Correl.makeArray(1);
 
-    float Erel_14O = Correl.findErel();
+    float Erel_15O = Correl.findErel();
     float thetaCM = Correl.thetaCM;
-    float Ex = Erel_14O - Q14O;
+    float Ex = Erel_15O - Q15O;
 
-    Histo->Erel_14O_15O->Fill(Erel_14O);
+    Histo->Erel_14O_15O->Fill(Erel_15O);
     Histo->Ex_14O_15O->Fill(Ex);
     Histo->ThetaCM_14O_15O->Fill(thetaCM*180./acos(-1));
     Histo->VCM_14O_15O->Fill(Correl.velocityCM);
-    Histo->Erel_15O_costhetaH->Fill(Erel_14O,Correl.cos_thetaH);
+    Histo->Erel_15O_costhetaH->Fill(Erel_15O,Correl.cos_thetaH);
   }
+}
+*/
 
-  //1 proton pickup to get 15F -> p + 14O?
+
+void det::corr_15F()
+{
+  //15F -> p + 14O
+  if(Correl.proton.mult == 1 && Correl.O14.mult == 1)
+  {
+    float const Q15F = mass_15F - (mass_14O+mass_p);
+    Correl.zeroMask();
+    Correl.proton.mask[0]=1;
+    Correl.O14.mask[0]=1;
+    Correl.makeArray(1);
+
+    float Erel_15F = Correl.findErel();
+    float thetaCM = Correl.thetaCM;
+    float Ex = Erel_15F - Q15F;
+
+    Histo->Erel_15F_p14O->Fill(Erel_15F);
+    Histo->Ex_15F_p14O->Fill(Ex);
+    Histo->ThetaCM_15F_p14O->Fill(thetaCM*180./acos(-1));
+    Histo->VCM_15F_p14O->Fill(Correl.velocityCM);
+    Histo->Erel_p14O_costhetaH->Fill(Erel_15F,Correl.cos_thetaH);
+  }
 }

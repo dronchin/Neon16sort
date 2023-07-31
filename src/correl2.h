@@ -41,12 +41,20 @@ class correl2
   parType He6;
   parType Li6;
   parType Li7;
-  parType Li8;
-  parType Li9;
   parType Be7;
   parType Be9;
-
-
+  parType B8;
+  parType B10;
+  parType C9;
+  parType C10;
+  parType C11;
+  parType C12;
+  parType N12;
+  parType N13;
+  parType N14;
+  parType O13;
+  parType O14;
+  parType O15;
 
   vector<parType*> particle;
 

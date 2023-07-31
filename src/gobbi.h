@@ -21,14 +21,13 @@ struct dataT
   int id;
 };
 
-
-class Gobbi
+class gobbi
 {
  public:
   float TargetThickness;
 
-  Gobbi(histo * Histo1);
-  ~Gobbi();
+  gobbi(histo * Histo1);
+  ~gobbi();
   histo * Histo;
   telescope * Telescope[4];
 
@@ -50,16 +49,16 @@ class Gobbi
   void addDeltaEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
   void addCsIEvent(int quad, unsigned short chan, unsigned short high, unsigned short low, unsigned short time);
 
-
-  void SiNeigbours();
+  int analyze();
+  void SiNeighbours();
   int matchTele();
-  int multiSiSi;
-  int multiSiSiCsI;
 
+  int multidEE;
+  int multiECsI;
   int NsimpleECsI = 0;
   int NmultiECsI = 0;
-  int NsimpleSiSi = 0;
-  int NmultiSiSi = 0;
+  int NsimpledEE = 0;
+  int NmultidEE = 0;
 
   int NE;
   int NT;

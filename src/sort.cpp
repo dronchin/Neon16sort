@@ -1,4 +1,5 @@
-//file to unpack data from the neutron detector, ND 2020
+//file to unpack data for the experiment to look for the 4+ state in Neon16.
+//JP, RJC, ND 2023
 
 #include <iostream>
 #include <iomanip>
@@ -9,6 +10,7 @@
 #include "det.h"
 #include "histo.h"
 #include "scalerBuf.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -149,7 +151,7 @@ int main()
         {
           NphysicsEvent++;
           //eventually unpack the point
-          bool stat = det.unpack(point);
+          bool stat = Det.unpack(point);
           //if (!stat) break;
         }
         else if (type == 20)
@@ -196,11 +198,11 @@ int main()
 
   //TODO change these to match what your scalers actually end up being.
   //when this is done, also change scalerNames.dat
-  cout << "Gobbi event type counters" << endl
-  cout << "  NsimpleECsI " << det.Gobbi->NsimpleECsI << endl;
-  cout << "  NmultiECsI " << det.Gobbi->NmultiECsI << endl;
-  cout << "  NsimpleSiSi " << det.Gobbi->NsimpleSiSi << endl;
-  cout << "  NmultiSiSi " << det.Gobbi->NmultiSiSi << endl;
+  cout << "Gobbi event type counters" << endl;
+  cout << "  NsimpleECsI        " << Det.Gobbi->NsimpleECsI << endl;
+  cout << "  NmultiECsI         " << Det.Gobbi->NmultiECsI << endl;
+  cout << "  NsimpledEE (Si-Si) " << Det.Gobbi->NsimpledEE << endl;
+  cout << "  NmultidEE (Si-Si)  " << Det.Gobbi->NmultidEE << endl;
 
   cout << "physics Event Counters = " << NphysicsEvent << endl;
   cout << "scaler buffers = " << NscalerBuffer << endl;
@@ -214,6 +216,39 @@ int main()
   cout << "run time: " << (float)t/CLOCKS_PER_SEC/60 << " min" << endl;
 
   delete Histo;
+
+  int roll = rand() % (20 - 1 + 1) + 1;
+  string line,line2;
+  line = R"(          _-_.      )";
+  cout << line << endl;
+  line = R"(     _-',^. `-_.    )";
+  cout << line << endl;
+  line = R"( ._-' ,'   `.   `-_ )";
+  cout << line << endl;
+  line = R"(!`-_._________`-':::)";
+  cout << line << endl;
+  line = R"(!   /\        /\::::)";
+  cout << line << endl;
+  if (roll >= 10)
+    line = R"(;  /  \  )";
+  else
+    line = R"(;  /  \   )";
+  line2 = R"(  /..\:::)";
+  cout << line << roll << line2 << endl;
+  line = R"(! /    \    /....\::)";
+  cout << line << endl;
+  line = R"(!/      \  /......\:)";
+  cout << line << endl;
+  line = R"(;--.___. \/_.__.--;;)";
+  cout << line << endl;
+  line = R"( '-_    `:!;;;;;;;' )";
+  cout << line << endl;
+  line = R"(    `-_, :!;;;''    )";
+  cout << line << endl;
+  line = R"(        `-!'        )";
+  cout << line << endl;
+  if (roll == 20) { cout << "Nat 20!" << endl;}
+
   return 0;
 }
 

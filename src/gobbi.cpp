@@ -4,6 +4,16 @@
 //Class written to handle all specifics of the gobbi array
 //such as communicating with HINP, calibrations, Checking for charge sharing in neighbor
 //calculating geometry
+//                 ,,__
+//        ..  ..   / o._)                   .---.
+//       /--'/--\  \-'||        .----.    .'     '.
+//      /        \_/ / |      .'      '..'         '-.
+//    .'\  \__\  __.'.'     .'          e-._
+//      )\ |  )\ |      _.'
+//     // \\ // \\
+//    ||_  \\|_  \\_             (Wait Gobbi the person, not Gobi desert)
+//    '--' '--'' '--'
+
 
 using namespace std;
 
@@ -65,21 +75,21 @@ void gobbi::reset()
 }
 
 void gobbi::addFrontEvent(int quad, unsigned short chan, unsigned short high, 
-                                    unsigned short low, unsigned short time)
+                                    unsigned short low, unsigned short timeR)
 {
   //Use calibration to get Energy and fill elist class in Telescope
   float Energy = FrontEcal->getEnergy(quad, chan, high);
-  float time = FrontTimecal->getTime(quad, chan, time);
+  float time = FrontTimecal->getTime(quad, chan, timeR);
 
   //good spot to fill in all of the summary and chan spectrums
   Histo->sumFrontE_R->Fill(quad*Histo->channum + chan, high);
-  Histo->sumFrontTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumFrontTime_R->Fill(quad*Histo->channum + chan, timeR);
   Histo->sumFrontE_cal->Fill(quad*Histo->channum + chan, Energy);
   Histo->sumFrontTime_cal->Fill(quad*Histo->channum + chan, time);
 
   Histo->FrontE_R[quad][chan]->Fill(high);
   Histo->FrontElow_R[quad][chan]->Fill(low);
-  Histo->FrontTime_R[quad][chan]->Fill(time);
+  Histo->FrontTime_R[quad][chan]->Fill(timeR);
   Histo->FrontE_cal[quad][chan]->Fill(Energy);      
 
   //TODO this is a good spot to throw an if statement and make software thresholds
@@ -89,7 +99,7 @@ void gobbi::addFrontEvent(int quad, unsigned short chan, unsigned short high,
 }
 
 void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high, 
-                                   unsigned short low, unsigned short time)
+                                   unsigned short low, unsigned short timeR)
 {
   //Use calibration to get Energy and fill elist class in Telescope
   float Energy = BackEcal->getEnergy(quad, chan, high);
@@ -97,13 +107,13 @@ void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high,
 
   //good spot to fill in all of the summary and chan spectrums
   Histo->sumBackE_R->Fill(quad*Histo->channum + chan, high);
-  Histo->sumBackTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumBackTime_R->Fill(quad*Histo->channum + chan, timeR);
   Histo->sumBackE_cal->Fill(quad*Histo->channum + chan, Energy);
   Histo->sumBackTime_cal->Fill(quad*Histo->channum + chan, time);
 
   Histo->BackE_R[quad][chan]->Fill(high);
   Histo->BackElow_R[quad][chan]->Fill(low);
-  Histo->BackTime_R[quad][chan]->Fill(time);
+  Histo->BackTime_R[quad][chan]->Fill(timeR);
   Histo->BackE_cal[quad][chan]->Fill(Energy);      
 
   //TODO this is a good spot to throw an if statement and make software thresholds
@@ -113,7 +123,7 @@ void gobbi::addBackEvent(int quad, unsigned short chan, unsigned short high,
 }
 
 void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high, 
-                                    unsigned short low, unsigned short time)
+                                    unsigned short low, unsigned short timeR)
 {
   //Use calibration to get Energy and fill elist class in Telescope
   float Energy = DeltaEcal->getEnergy(quad, chan, high);
@@ -121,13 +131,13 @@ void gobbi::addDeltaEvent(int quad, unsigned short chan, unsigned short high,
 
   //good spot to fill in all of the summary and chan spectrums
   Histo->sumDeltaE_R->Fill(quad*Histo->channum + chan, high);
-  Histo->sumDeltaTime_R->Fill(quad*Histo->channum + chan, time);
+  Histo->sumDeltaTime_R->Fill(quad*Histo->channum + chan, timeR);
   Histo->sumDeltaE_cal->Fill(quad*Histo->channum + chan, Energy);
   Histo->sumDeltaTime_cal->Fill(quad*Histo->channum + chan, time);
 
   Histo->DeltaE_R[quad][chan]->Fill(high);
   Histo->DeltaElow_R[quad][chan]->Fill(low);
-  Histo->DeltaTime_R[quad][chan]->Fill(time);
+  Histo->DeltaTime_R[quad][chan]->Fill(timeR);
   Histo->DeltaE_cal[quad][chan]->Fill(Energy);      
 
   //TODO this is a good spot to throw an if statement and make software thresholds
@@ -149,7 +159,7 @@ void gobbi::MatchCsIEnergyTime()
   }
   for (int it=0;it<NT;it++)
   {
-    Histo->CsI_Time_R_um[DataT[it].id]->Fill(DataT[ie].itime);
+    Histo->CsI_Time_R_um[DataT[it].id]->Fill(DataT[it].itime);
   }
 
   // match up energies to times
@@ -169,7 +179,7 @@ void gobbi::MatchCsIEnergyTime()
         //add event to the right telescope elsit of csi 
         //TODO take out energy calibration here, Calibrations need to be for each CsI crystal
         //and is also dependent on PID in CsI. -ND
-        int id = DataE[ie].id
+        int id = DataE[ie].id;
         if (id <4)
         {
           int quad = 0;
@@ -232,7 +242,11 @@ void gobbi::MatchCsIEnergyTime()
 }
 
 
-void gobbi::SiNeigbours()
+//   _.+._
+// (^\/^\/^)
+//  \@*@*@/
+//  {_____} Just as the queen would prefer to spell it
+void gobbi::SiNeighbours()
 {
   //When a charged particle moves through Si, there is cross talk between neighbouring
   //strips. Generally the signal is proportional to the total signal in the Si.
@@ -255,7 +269,19 @@ int gobbi::analyze()
   int Nmatch = 0;
   for (int id=0;id<5;id++) 
   {
-    Telescope[id].Nsolution = 0;
+
+    //WARNING: this is only in for testing alpha calibrations. Comment this out
+    //when you are taking real data
+    if (Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1)
+    {
+      int testhit = Telescope[id]->testingHitE();
+      Telescope[id]->position(9);
+      Histo->testinghitmap->Fill(Telescope[id]->Solution[9].Xpos, Telescope[id]->Solution[9].Ypos);
+    }
+    
+
+
+    Telescope[id]->Nsolution = 0;
     //If there is any CsI info, use E-CsI hit scheme
     if (id < 4 && Telescope[id]->CsI.Nstore >= 1)
     {
@@ -282,14 +308,14 @@ int gobbi::analyze()
       if (Telescope[id]->Front.Nstore ==1 && Telescope[id]->Back.Nstore ==1 && Telescope[id]->Delta.Nstore ==1)
       {
         Nmatch = Telescope[id]->simpledEE();
-        NsimpleSiSi += Nmatch;
-        multiSiSi += Nmatch;
+        NsimpledEE += Nmatch;
+        multidEE += Nmatch;
       }
       else //if higher multiplicity then worry about picking the right one
       {
         Nmatch = Telescope[id]->multiHitdEE();
-        NmultiSiSi += Nmatch;
-        multiSiSi += Nmatch;
+        NmultidEE += Nmatch;
+        multidEE += Nmatch;
       }
     }
   }
@@ -309,11 +335,13 @@ int gobbi::analyze()
       //fill in dE-E plots to select particle type
       if (isSiCsI)
       {
-        float Ener = Telescope[id]->Solution[isol].energy + 
-            Telescope[id]->Solution[isol].denergy*(1-cos(Telescope[id]->Solution[isol].theta));
-      
-        Histo->DEE_CsI[id]->Fill(Ener, Telescope[id]->Solution[isol].denergy*
-                                    cos(Telescope[id]->Solution[isol].theta));
+        //float Ener = Telescope[id]->Solution[isol].energy + 
+        //  Telescope[id]->Solution[isol].denergy*(1-cos(Telescope[id]->Solution[isol].theta));
+        float Ener = Telescope[id]->Solution[isol].energyR;
+        int icsi = Telescope[id]->Solution[isol].iCsI;
+        Histo->DEE_CsI[id][icsi]->Fill(Ener, Telescope[id]->Solution[isol].denergy*
+                                            cos(Telescope[id]->Solution[isol].theta));
+        Histo->timediff_CsI[id][icsi]->Fill(Telescope[id]->Solution[isol].timediff);
       }
       else
       {
@@ -322,6 +350,7 @@ int gobbi::analyze()
 
         Histo->DEE[id]->Fill(Ener, Telescope[id]->Solution[isol].denergy*
                                     cos(Telescope[id]->Solution[isol].theta));
+        Histo->timediff[id]->Fill(Telescope[id]->Solution[isol].timediff);
       }
     }
   }
@@ -340,5 +369,7 @@ int gobbi::analyze()
     Telescope[id]->calcEloss();
   }
 
-  return multiSiSi + multiSiSiCsI;
+  return multidEE + multiECsI;
 }
+
+

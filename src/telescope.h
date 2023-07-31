@@ -29,26 +29,32 @@ struct lines
 class telescope
 {
  public:
-  telescope(float);
+  telescope();
   ~telescope();
   void init(int);
-  void SetTargetDistance(double, float);
+  void SetTarget(double, float);
   void reset();
   void Reduce();
 
-  int SimpledEE();
-  int SimpleECsI();
+  int testingHitE();
+  int simpledEE();
+  int simpleECsI();
   int multiHitdEE(); //+loop is private
   int multiHitECsI(); //+loop is private
   void load(int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int);
-  float light2energy(int,int,int,float);
 
   int getPID();
   int calcEloss();
 
   CLosses * Targlosses;
   CLosses * PbSnlosses;
+  CLosses * Silosses;
   float TargetThickness;
+
+  calibrate * calCsi_d;
+  calibrate * calCsi_t;
+  calibrate * calCsi_Alpha;
+  float light2energy(int,int,int,float);
 
   int id;
   float maxFront;
@@ -69,6 +75,7 @@ class telescope
   elist CsI;
 
   solution Solution[10];
+  int NSisolution;
   int Nsolution;
 
   pid * Pid;
